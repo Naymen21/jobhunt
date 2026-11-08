@@ -1,0 +1,36 @@
+<form class="card form-card" id="answers-form" hx-post="/settings/answers" hx-target="this" hx-swap="outerHTML">
+  <div class="form-section">
+    <h2>Answer bank</h2>
+    <p class="muted small">Answers you write once and reuse. <code>/draft-applications</code> copies these word for word instead of
+      rewriting them, and only drafts the job-specific ones (why this company, why this role, a relevant project).
+      Leave one blank and the draft will remind you to fill it in.</p>
+  </div>
+  <div class="form-section answer-bank">
+    {% for a in answers %}
+    <div class="bank-item">
+      {% if a.fixed %}
+      <label class="field-label" for="a-{{ a.id }}">{{ a.question }}</label>
+      {% else %}
+      <div class="bank-q-row">
+        <input name="q-{{ a.id }}" value="{{ a.question }}" aria-label="Question">
+        <button class="btn btn-sm btn-quiet" type="button" hx-post="/settings/answers/{{ a.id }}/delete" hx-target="#answers-form" hx-swap="outerHTML">Remove</button>
+      </div>
+      {% endif %}
+      <textarea class="prose-area" id="a-{{ a.id }}" name="a-{{ a.id }}" rows="2" placeholder="Your answer">{{ a.answer }}</textarea>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-section">
+    <h3 class="form-sub">Add your own question</h3>
+    <div class="form-grid">
+      <label class="form-field wide"><span class="field-label">Question</span>
+        <input name="new_question" placeholder="e.g. Do you have reliable transportation?"></label>
+      <label class="form-field wide"><span class="field-label">Answer</span>
+        <textarea class="prose-area" name="new_answer" rows="2"></textarea></label>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button class="btn primary" type="submit">Save answers</button>
+    {% if saved %}<span class="saved-note">Saved</span>{% endif %}
+  </div>
+</form>

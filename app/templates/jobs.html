@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Jobs · Job Hunt{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Jobs</h1>
+      <p class="muted">Saved searches over your companies' job boards{% if apify_configured %} and LinkedIn{% endif %}. Nothing is applied to automatically.</p>
+    </div>
+    <nav class="seg" aria-label="Jobs sections">
+      <a class="seg-opt {% if tab != 'watchlist' %}active{% endif %}" href="/jobs">{% include "partials/icon_jobs.svg" %}Searches</a>
+      <a class="seg-opt {% if tab == 'watchlist' %}active{% endif %}" href="/jobs?tab=watchlist">{% include "partials/icon_building.svg" %}Watchlist</a>
+    </nav>
+  </div>
+
+  {% if tab == "watchlist" %}
+    {% include "partials/watchlist.html" %}
+  {% else %}
+  <div class="jobs-layout">
+    <aside id="search-list" aria-label="Saved searches"
+           hx-get="/jobs/searches/list{% if selected %}?selected={{ selected.id }}{% endif %}" hx-trigger="searchesChanged from:body">
+      {% include "partials/job_search_list.html" %}
+    </aside>
+    <div id="search-main" class="min0">
+      {% if editing %}
+        {% include "partials/job_search_form.html" %}
+      {% elif selected %}
+        {% set spec = spec %}
+        <div class="card search-head">
+          <div class="sh-main">
+            <div class="sh-title">{{ selected.name }}</div>
+            <div class="muted small">{% if selected.last_run_at %}Last run {{ selected.last_run_at | ago }}{% else %}Not run yet{% endif %}{% if selected.auto_run %} · in the daily run{% endif %}</div>
+            <div class="chip-row sh-criteria">
+              {% for k in spec.include_keywords %}<span class="tag">{{ k }}</span>{% endfor %}
+              {% if spec.require_keywords %}<span class="tag">+ {{ spec.require_keywords | join(" / ") }}</span>{% endif %}
+              {% if spec.high_school_only %}<span class="flag flag-good">High school OK only</span>{% endif %}
+              {% if spec.no_degree_only %}<span class="flag flag-good">No degree requirement</span>{% endif %}
+              {% if spec.min_employees or spec.max_employees %}<span class="tag">{{ spec.min_employees or 1 }}–{{ spec.max_employees or "any" }} people{% if spec.hide_unknown_size %}, sized only{% endif %}</span>{% endif %}
+              {% for l in spec.locations %}<span class="tag">{{ l }}</span>{% endfor %}
+              {% for m in spec.work_modes %}<span class="tag">{{ WORK_MODE_LABELS[m] }}</span>{% endfor %}
+              {% for t in spec.job_types %}<span class="tag">{{ JOB_TYPE_LABELS[t] }}</span>{% endfor %}
+              {% if spec.min_pay %}<span class="tag">${{ "{:,}".format(spec.min_pay) }}+/yr</span>{% endif %}
+              {% if spec.posted_within_days %}<span class="tag">last {{ spec.posted_within_days }} day{{ "" if spec.posted_within_days == 1 else "s" }}</span>{% endif %}
+              {% for x in spec.exclude_keywords %}<span class="tag tag-not">not {{ x }}</span>{% endfor %}
+              <span class="tag tag-source">{% if "watchlist" in spec.sources %}{{ spec.companies | length if spec.companies else "All" }} watchlist {{ "companies" if not spec.companies or spec.companies | length != 1 else "company" }}{% endif %}{% if spec.sources | length == 2 %} + {% endif %}{% if "apify" in spec.sources %}LinkedIn{% endif %}</span>
+            </div>
+          </div>
+          <div class="sh-actions">
+            <button class="btn primary" hx-post="/jobs/searches/{{ selected.id }}/run" hx-target="#run-slot" hx-swap="innerHTML">
+              {% include "partials/icon_refresh.svg" %}Run now</button>
+            <button class="btn" hx-get="/jobs/searches/{{ selected.id }}/edit" hx-target="#search-main" hx-swap="innerHTML">Edit</button>
+          </div>
+        </div>
+        <div id="run-slot">{% if run %}{% set sources = run.sources_json | fromjson %}{% include "partials/job_run_progress.html" %}{% endif %}</div>
+        <div id="job-results">{% include "partials/job_results.html" %}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+<aside class="drawer" id="job-detail" aria-label="Job details" hidden></aside>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const drawer = document.getElementById("job-detail"), backdrop = document.getElementById("drawer-backdrop");
+  const closeDrawer = () => {
+    drawer.hidden = backdrop.hidden = true;
+    document.querySelectorAll("tr.is-open").forEach(tr => tr.classList.remove("is-open"));
+  };
+  document.body.addEventListener("htmx:afterSwap", (ev) => {
+    if (ev.detail.target === drawer) { drawer.hidden = backdrop.hidden = false; drawer.scrollTop = 0; }
+    if (ev.detail.target.id === "job-results" || ev.detail.target.closest?.("#job-results")) apply();
+  });
+  backdrop.addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeDrawer(); });
+  document.addEventListener("click", (ev) => {
+    if (ev.target.closest("[data-close-drawer]")) closeDrawer();
+    const tr = ev.target.closest("tr[data-job]");
+    if (tr && !ev.target.closest("a, button")) {
+      document.querySelectorAll("tr.is-open").forEach(x => x.classList.remove("is-open"));
+      tr.classList.add("is-open");
+    }
+  });
+
+  /* Save / Dismiss from the drawer: update the row without reloading the table */
+  document.body.addEventListener("jobStateChanged", (ev) => {
+    const tr = document.querySelector(`tr[data-job="${ev.detail.id}"]`);
+    if (tr) { tr.dataset.state = ev.detail.state; tr.classList.toggle("is-saved", ev.detail.state === "saved");
+              tr.classList.toggle("is-dismissed", ev.detail.state === "dismissed"); apply(); }
+  });
+
+  /* ---- results: quick filters, company, text, sort ---- */
+  let sortKey = "score", sortDir = -1;
+  function apply() {
+    const box = document.querySelector(".job-results");
+    if (!box) return;
+    const on = (name) => box.querySelector(`[data-quick="${name}"]`)?.checked;
+    const company = box.querySelector("[data-company-filter]")?.value || "";
+    const text = (box.querySelector("[data-text-filter]")?.value || "").trim().toLowerCase();
+    const rows = [...box.querySelectorAll("tr[data-job]")];
+    let shown = 0, active = 0;
+    ["new", "hs", "small", "local", "eligible", "saved", "pay", "remote", "noflags", "dismissed"].forEach(n => { if (on(n)) active++; });
+    if (company) active++;
+    if (text) active++;
+    rows.forEach(tr => {
+      const d = tr.dataset;
+      const ok = (!on("new") || d.new === "1") && (!on("eligible") || d.eligible === "1") && (!on("hs") || d.hs === "1") && (!on("small") || d.small === "1") && (!on("local") || d.local === "1")
+        && (!on("saved") || d.state === "saved") && (!on("pay") || d.pay === "1")
+        && (!on("remote") || d.mode === "remote") && (!on("noflags") || d.flags === "0")
+        && (on("dismissed") || on("saved") || d.state !== "dismissed")
+        && (!company || d.company === company) && (!text || d.text.includes(text));
+      tr.hidden = !ok;
+      if (ok) shown++;
+    });
+    const tbody = box.querySelector("tbody");
+    rows.sort((a, b) => {
+      const x = a.dataset[sortKey] || "", y = b.dataset[sortKey] || "";
+      const nx = parseFloat(x), ny = parseFloat(y);
+      const cmp = (!isNaN(nx) && !isNaN(ny)) ? nx - ny : x.localeCompare(y);
+      return cmp * sortDir;
+    }).forEach(tr => tbody.appendChild(tr));
+    box.querySelectorAll("th[data-sort]").forEach(th => {
+      th.classList.toggle("sorted", th.dataset.sort === sortKey);
+      th.dataset.dir = th.dataset.sort === sortKey ? (sortDir > 0 ? "asc" : "desc") : "";
+    });
+    box.querySelector("[data-shown]").textContent = shown;
+    box.querySelector("[data-no-match]").hidden = shown > 0 || !rows.length;
+    box.querySelector("[data-filter-count]").textContent = active ? `${active} on` : "";
+    box.querySelector("[data-filter-reset]").hidden = !active;
+  }
+  document.addEventListener("change", (ev) => { if (ev.target.closest(".job-results .job-toolbar")) apply(); });
+  document.addEventListener("input", (ev) => { if (ev.target.matches("[data-text-filter]")) apply(); });
+  document.addEventListener("click", (ev) => {
+    const th = ev.target.closest(".job-results th[data-sort]");
+    if (th) {
+      const key = th.dataset.sort;
+      sortDir = key === sortKey ? -sortDir : (["title", "company", "location", "mode", "source"].includes(key) ? 1 : -1);
+      sortKey = key;
+      apply();
+    }
+    if (ev.target.closest(".job-results [data-filter-reset]")) {
+      const box = document.querySelector(".job-results");
+      box.querySelectorAll("[data-quick]").forEach(i => { i.checked = false; });
+      box.querySelector("[data-company-filter]").value = "";
+      box.querySelector("[data-text-filter]").value = "";
+      apply();
+    }
+  });
+  apply();
+})();
+</script>
+{% endblock %}

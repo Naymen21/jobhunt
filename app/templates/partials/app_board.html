@@ -1,0 +1,69 @@
+{% import "partials/macros.html" as m %}
+<div class="app-summary">
+  <div class="kpi"><span class="kpi-label">Applied this week</span><span class="kpi-num">{{ summary.applied_this_week }}</span></div>
+  <div class="kpi"><span class="kpi-label">Awaiting drafts</span><span class="kpi-num">{{ summary.awaiting_drafts }}</span>
+    <span class="kpi-sub">{% if summary.awaiting_drafts %}run /draft-applications in Claude Code{% else %}all saved jobs have drafts{% endif %}</span></div>
+  <div class="kpi {% if summary.follow_ups_due %}kpi-pop{% endif %}"><span class="kpi-label">Follow-ups due</span><span class="kpi-num">{{ summary.follow_ups_due }}</span></div>
+  <div class="kpi"><span class="kpi-label">In the pipeline</span><span class="kpi-num">{{ summary.total }}</span></div>
+</div>
+
+{% if not total %}
+<div class="card empty-list">
+  Nothing here yet. Open a job on the <a href="/jobs">Jobs</a> page and press <strong>Save</strong>: it lands here as
+  "Saved". Then run <code>/draft-applications</code> in Claude Code to write a cover letter and answers.
+</div>
+{% else %}
+<div class="board-tools">
+  <span class="tb-label">Show</span>
+  {% for key, label in STATUS_LABELS.items() %}{% if counts[key] %}
+  <label class="toggle"><input type="checkbox" data-status-filter value="{{ key }}">
+    <span><i class="tg-check">{% include "partials/icon_check.svg" %}</i>{{ label }}<b>{{ counts[key] }}</b></span></label>
+  {% endif %}{% endfor %}
+  {% if summary.follow_ups_due %}
+  <label class="toggle toggle-pop"><input type="checkbox" data-due-filter>
+    <span><i class="tg-check">{% include "partials/icon_check.svg" %}</i>Follow up due<b>{{ summary.follow_ups_due }}</b></span></label>
+  {% endif %}
+  <span class="grow"></span>
+  <input class="table-search" type="search" data-board-search placeholder="Search company or title" aria-label="Search applications">
+</div>
+
+<div class="board">
+  {% for col in columns %}
+  <section class="board-col" data-column="{{ col.key }}">
+    <div class="col-head"><span class="col-title">{{ col.label }}</span><span class="col-count" data-col-count>{{ col.cards | length }}</span></div>
+    <div class="col-cards">
+      {% for c in col.cards %}
+      {% set a = c.app %}{% set j = c.job %}
+      <button type="button" class="app-card" data-card data-status="{{ a.status }}" data-due="{{ 1 if c.due else 0 }}"
+              data-text="{{ (j.company ~ ' ' ~ j.title) | lower }}"
+              hx-get="/applications/{{ a.id }}" hx-target="#app-detail" hx-swap="innerHTML">
+        <span class="ac-top">
+          <span class="co-mark {{ j.company | avatar_class }}" aria-hidden="true">{{ (j.company or "?")[:1] | upper }}</span>
+          <span class="min0">
+            <span class="ac-title">{{ j.title }}</span>
+            <span class="ac-co">{{ j.company }}</span>
+          </span>
+        </span>
+        <span class="ac-meta">
+          {% if c.basic is not none %}<span class="score-chip" title="Basic match">{{ c.basic }}</span>{% endif %}
+          {% if j.ai_score is not none %}<span class="score-chip ai" title="AI score">AI {{ j.ai_score }}</span>{% endif %}
+          {% set hs = c.flags | selectattr("key", "equalto", "hs_ok") | list %}
+          {% if hs %}<span class="flag flag-good">HS ok</span>{% endif %}
+          {% set warn = c.flags | rejectattr("key", "equalto", "hs_ok") | list %}
+          {% if warn %}<span class="flag" title="{{ warn | map(attribute='label') | join(', ') }}">{{ warn | length }} flag{{ "" if warn | length == 1 else "s" }}</span>{% endif %}
+          {% if a.status in ["offer", "rejected", "withdrawn"] %}<span class="status-pill st-{{ a.status }}">{{ STATUS_LABELS[a.status] }}</span>{% endif %}
+          {% if a.cover_edited %}<span class="tag">Edited</span>{% endif %}
+          {% if c.referred %}<span class="flag flag-good">Referred</span>{% endif %}
+        </span>
+        {% if c.pitch and a.status in ["saved", "drafts_ready"] %}<span class="due-tag">Apply only if they say yes</span>
+        {% elif c.apply_by %}<span class="due-tag">Apply by {{ c.apply_by }}</span>
+        {% elif c.due %}<span class="due-tag">Follow up due</span>
+        {% elif a.applied_at %}<span class="ac-date muted">Applied {{ a.applied_at }}</span>{% endif %}
+      </button>
+      {% endfor %}
+      <p class="col-empty muted xsmall">Nothing here</p>
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% endif %}

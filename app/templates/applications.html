@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Applications · Job Hunt{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Applications</h1>
+      <p class="muted">Saved jobs move left to right. You write the final version and submit every application yourself.</p>
+    </div>
+    <a class="btn" href="/jobs">{% include "partials/icon_jobs.svg" %}Find more jobs</a>
+  </div>
+  <div id="app-board" hx-get="/applications/board" hx-trigger="appsChanged from:body" hx-swap="innerHTML">
+    {% include "partials/app_board.html" %}
+  </div>
+</div>
+<div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+<aside class="drawer drawer-wide" id="app-detail" aria-label="Application" hidden></aside>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const drawer = document.getElementById("app-detail"), backdrop = document.getElementById("drawer-backdrop");
+  const close = () => { drawer.hidden = backdrop.hidden = true; };
+  document.body.addEventListener("htmx:afterSwap", (ev) => {
+    if (ev.detail.target === drawer) { drawer.hidden = backdrop.hidden = false; }
+    if (ev.detail.target.id === "app-board") apply();
+  });
+  backdrop.addEventListener("click", close);
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") close(); });
+  document.addEventListener("click", async (ev) => {
+    if (ev.target.closest("[data-close-drawer]")) close();
+    const tab = ev.target.closest("[data-cover-tab]");
+    if (tab && !tab.disabled) {
+      const sec = tab.closest(".cover-section");
+      sec.dataset.coverView = tab.dataset.coverTab;
+      sec.querySelectorAll("[data-cover-tab]").forEach(b => b.classList.toggle("active", b === tab));
+    }
+    const btn = ev.target.closest("[data-copy-from]");
+    if (btn) {
+      const text = document.getElementById(btn.dataset.copyFrom)?.innerText || "";
+      const label = btn.textContent;
+      try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; } catch { btn.textContent = "Copy failed"; }
+      setTimeout(() => { btn.textContent = label; }, 1400);
+    }
+  });
+
+  /* status chips + search on the board */
+  function apply() {
+    const box = document.getElementById("app-board");
+    const on = [...box.querySelectorAll("[data-status-filter]:checked")].map(i => i.value);
+    const q = (box.querySelector("[data-board-search]")?.value || "").trim().toLowerCase();
+    const due = box.querySelector("[data-due-filter]")?.checked;
+    box.querySelectorAll("[data-card]").forEach(c => {
+      c.hidden = !((!on.length || on.includes(c.dataset.status)) && (!q || c.dataset.text.includes(q)) && (!due || c.dataset.due === "1"));
+    });
+    box.querySelectorAll("[data-column]").forEach(col => {
+      const n = col.querySelectorAll("[data-card]:not([hidden])").length;
+      col.querySelector("[data-col-count]").textContent = n;
+      col.classList.toggle("is-empty", n === 0);
+    });
+  }
+  document.addEventListener("change", (ev) => { if (ev.target.closest("#app-board .board-tools")) apply(); });
+  document.addEventListener("input", (ev) => { if (ev.target.matches("[data-board-search]")) apply(); });
+  apply();
+})();
+</script>
+{% endblock %}

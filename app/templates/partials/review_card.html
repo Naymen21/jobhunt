@@ -1,0 +1,124 @@
+{% import "partials/macros.html" as m %}
+{% set a = c.a %}{% set j = c.j %}
+<article class="card review-card {% if c.pitch %}is-pitch{% endif %}" id="review-{{ a.id }}">
+  {% if error %}<div class="inline-error">{{ error }}</div>{% endif %}
+  {% if notice %}<div class="notice">{{ notice }}</div>{% endif %}
+  <header class="rc-head">
+    <span class="co-mark {{ j.company | avatar_class }}">{{ (j.company or "?")[:1] | upper }}</span>
+    <div class="min0">
+      <h2 class="rc-title">{{ j.title }}</h2>
+      <div class="rc-sub">{{ j.company }}
+        {% if c.size %}<span class="size-tag" title="{{ c.size_source }}">· ~{{ c.size }} people</span>{% endif %}
+        {% if c.local %}<span class="local-tag">Local</span>{% endif %}
+        {% if c.pay %}· {{ c.pay }}{% endif %} · {{ (j.location or "Location not stated").split(";")[0] }}
+        {% if j.work_mode %}· {{ WORK_MODE_LABELS[j.work_mode] }}{% endif %}</div>
+      <div class="chip-row">
+        <span class="status-pill st-{{ a.status }}">{{ STATUS_LABELS[a.status] }}</span>
+        {% for f in c.flags %}<span class="flag {% if f.key == 'hs_ok' %}flag-good{% elif f.key == 'pitch' %}flag-pitch{% endif %}" title="{{ f.snippet }}">{{ f.label }}</span>{% endfor %}
+      </div>
+    </div>
+    <div class="rc-score">
+      {% if j.ai_score is not none %}{{ m.ring(j.ai_score, "md") }}{% else %}<span class="ring-empty">–</span>{% endif %}
+      <span class="xsmall muted">AI</span>
+    </div>
+  </header>
+  {% if j.ai_notes %}<p class="rc-reason small">{{ j.ai_notes }}</p>{% endif %}
+  {% if a.ai_notes %}<div class="notice ai-note small"><span class="why-label">Notes</span> {{ a.ai_notes }}</div>{% endif %}
+
+  {% if c.pitch %}
+  <div class="pitch-banner"><strong>Pitch first.</strong> Small company: email the founder/CTO. <strong>Apply only if they say yes or ask you to.</strong></div>
+  {% endif %}
+
+  {# ---- outreach (front and center for pitches) ---- #}
+  {% macro outreach_block() %}
+  <section class="rc-section">
+    <h3>{{ "Pitch email" if c.pitch else "Outreach" }}</h3>
+    {% if a.needs_person or not c.contacts %}
+      <div class="needs-person" hx-get="/applications/{{ a.id }}/outreach" hx-trigger="load" hx-swap="innerHTML">
+        <p class="small"><strong class="pop-text">Needs a person.</strong> Loading…</p></div>
+    {% endif %}
+    {% for ct in c.contacts %}
+      <div class="rc-contact">
+        <div class="small"><strong>{{ ct.name or ct.email }}</strong> <span class="muted">{{ ct.title }}</span>
+          <span class="status-pill out-{{ ct.status }}">{{ OUT_LABELS[ct.status] }}</span>
+          {% if not c.queue_ok[ct.id][0] and ct.status in ["picked", "draft_ready"] %}<span class="flag">{{ c.queue_ok[ct.id][1] }}</span>{% endif %}
+          <a class="xsmall" href="/outreach?contact={{ ct.id }}">full thread</a></div>
+        {% if ct.drafts_version %}
+        <form class="rc-email" hx-post="/outreach/{{ ct.id }}/edit" hx-trigger="input changed delay:900ms from:find textarea, input changed delay:900ms from:find input" hx-target="#rc-ed-{{ ct.id }}">
+          <input name="subject" value="{{ ct.subject }}" {% if ct.status not in ["picked", "draft_ready", "approved"] %}readonly{% endif %}>
+          <textarea class="prose-area" name="body" rows="8" {% if ct.status not in ["picked", "draft_ready", "approved"] %}readonly{% endif %}>{{ ct.body }}</textarea>
+          <details class="small"><summary>Follow-ups (sent only if no reply)</summary>
+            <textarea class="prose-area" name="followup1" rows="3">{{ ct.followup1 }}</textarea>
+            <textarea class="prose-area" name="followup2" rows="2">{{ ct.followup2 }}</textarea></details>
+          <span class="xsmall" id="rc-ed-{{ ct.id }}">{% if ct.edited %}<span class="pop-text">Edited by you</span>{% endif %}</span>
+        </form>
+        <div class="rc-li"><span class="xsmall muted">LinkedIn note (send it yourself)</span>
+          <span class="ans-a" id="rc-li-{{ ct.id }}">{{ ct.linkedin_note }}</span>
+          <button class="btn btn-sm" type="button" data-copy-from="rc-li-{{ ct.id }}">Copy</button></div>
+        {% if ct.hook_source %}<p class="xsmall muted">Hook: {{ ct.hook }} <a href="{{ ct.hook_source }}" target="_blank" rel="noopener noreferrer">source</a></p>{% endif %}
+        {% elif ct.status == "picked" %}<p class="xsmall muted">Waiting for the autopilot to draft this email.</p>{% endif %}
+      </div>
+    {% endfor %}
+  </section>
+  {% endmacro %}
+
+  {% if c.pitch %}{{ outreach_block() }}{% endif %}
+
+  {# ---- application (normal jobs) ---- #}
+  {% if not c.pitch %}
+  <section class="rc-section cover-section" data-cover-view="{{ 'table' if c.table else 'plain' }}">
+    <div class="sec-head"><h3>Cover letter</h3>
+      {% if a.cover_letter %}
+      <div class="seg seg-sm"><button type="button" class="seg-opt {% if c.table %}active{% endif %}" data-cover-tab="table" {% if not c.table %}disabled{% endif %}>Table</button>
+        <button type="button" class="seg-opt {% if not c.table %}active{% endif %}" data-cover-tab="plain">Plain text</button></div>{% endif %}</div>
+    {% if not a.cover_letter %}
+      <p class="small muted">Waiting for drafts (the autopilot writes them; or run <code>/draft-applications</code>).</p>
+    {% else %}
+      {% if c.table %}
+      <div class="cover-pane" data-pane="table">
+        <p class="small">{{ c.table.opening }}</p>
+        <table class="req-table static"><thead><tr><th>What you're looking for</th><th>What I bring</th></tr></thead>
+          <tbody>{% for r in c.table.rows %}<tr><td>{{ r.need }}</td><td>{{ r.bring }}</td></tr>{% endfor %}</tbody></table>
+        <p class="small">{{ c.table.closing }}</p>
+        <a class="btn btn-sm" href="/applications/{{ a.id }}/cover-letter.pdf">{% include "partials/icon_download.svg" %}Download PDF</a>
+        <a class="link-btn small" href="/applications">edit the table in Applications</a>
+      </div>
+      {% endif %}
+      <div class="cover-pane" data-pane="plain">
+        <textarea class="prose-area cover-box" id="rc-cover-{{ a.id }}" name="cover_letter" rows="10"
+                  hx-post="/applications/{{ a.id }}/cover" hx-trigger="input changed delay:800ms" hx-target="#rc-cov-{{ a.id }}">{{ a.cover_letter }}</textarea>
+        <div class="cover-foot"><span class="xsmall" id="rc-cov-{{ a.id }}">{{ c.words }} words</span>
+          <div class="row-actions"><button class="btn btn-sm primary" type="button" data-copy-from="rc-cover-{{ a.id }}">Copy</button>
+            <a class="btn btn-sm" href="/applications/{{ a.id }}/cover-letter.pdf?format=plain">PDF</a></div></div>
+      </div>
+    {% endif %}
+  </section>
+  {% if c.answers %}
+  <details class="rc-section" open><summary><h3 class="inline">Answers</h3></summary>
+    <ul class="answer-list">{% for ans in c.answers %}<li><div class="ans-head"><span class="ans-q">{{ ans.question }}</span>
+      {% if ans.answer %}<button class="btn btn-sm" type="button" data-copy-from="rc-ans-{{ a.id }}-{{ loop.index }}">Copy</button>{% endif %}</div>
+      {% if ans.answer %}<div class="ans-a" id="rc-ans-{{ a.id }}-{{ loop.index }}">{{ ans.answer }}</div>{% else %}<div class="muted small">Not answered: add it in <a href="/settings?tab=answers">Answer bank</a>.</div>{% endif %}</li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+  {{ outreach_block() }}
+  {% endif %}
+
+  {# ---- actions ---- #}
+  <footer class="rc-actions">
+    {% if not c.pitch %}<a class="btn" href="{{ j.apply_url or j.url }}" target="_blank" rel="noopener noreferrer">Open application</a>{% endif %}
+    {% if a.status != "approved" or c.contacts | selectattr("status", "equalto", "draft_ready") | list %}
+    <button class="btn primary" hx-post="/review/{{ a.id }}/looks-good" hx-target="#review-{{ a.id }}" hx-swap="outerHTML">Looks good</button>
+    {% endif %}
+    {% if not c.pitch and a.status == "approved" %}
+    <button class="btn primary" hx-post="/review/{{ a.id }}/applied" hx-target="#review-{{ a.id }}" hx-swap="outerHTML">Mark as applied</button>
+    {% endif %}
+    <details class="redraft-dd"><summary class="btn">Redraft with note</summary>
+      <form hx-post="/review/{{ a.id }}/redraft" hx-target="#review-{{ a.id }}" hx-swap="outerHTML">
+        <select name="target">{% if not c.pitch %}<option value="app">Cover letter + answers</option>{% endif %}
+          {% for ct in c.contacts if ct.drafts_version %}<option value="contact-{{ ct.id }}">Email to {{ ct.name or ct.email }}</option>{% endfor %}</select>
+        <textarea class="prose-area" name="note" rows="2" placeholder="e.g. shorter, and mention my robotics project"></textarea>
+        <button class="btn btn-sm">Queue redraft</button></form></details>
+    <button class="btn btn-quiet" hx-post="/review/{{ a.id }}/skip" hx-target="#review-{{ a.id }}" hx-swap="outerHTML" hx-confirm="Skip this job? It's dismissed and its drafts are removed.">Skip</button>
+    {% if c.apply_by and not c.pitch %}<span class="due-tag">Apply by {{ c.apply_by }}</span>{% endif %}
+  </footer>
+</article>

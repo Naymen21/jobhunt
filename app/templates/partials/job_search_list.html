@@ -1,0 +1,26 @@
+<div class="search-list">
+  <div class="sl-head">
+    <span class="sl-title">Saved searches</span>
+    <a class="btn btn-sm" href="/jobs?edit=new">+ New</a>
+  </div>
+  {% for c in cards %}
+  {% set r = c.row %}
+  <a class="sl-item {% if selected and selected.id == r.id %}active{% endif %}" href="/jobs?search={{ r.id }}">
+    <span class="sl-top">
+      <span class="sl-name">{{ r.name }}</span>
+      {% if r.last_new and not c.running %}<span class="pop-count" title="{{ r.last_new }} new since the previous run">{{ r.last_new }}</span>{% endif %}
+    </span>
+    <span class="sl-meta">
+      {% if c.running %}<span class="spinner"></span> Running now
+      {% elif r.last_run_at %}{{ r.last_total }} jobs · ran {{ r.last_run_at | ago }}
+      {% else %}Not run yet{% endif %}
+    </span>
+    <span class="sl-sources">
+      {% if "watchlist" in c.spec.sources %}<span class="src-tag">Job boards</span>{% endif %}
+      {% if "apify" in c.spec.sources %}<span class="src-tag src-tag-li">LinkedIn</span>{% endif %}
+    </span>
+  </a>
+  {% else %}
+  <p class="muted small sl-empty">No saved searches yet.</p>
+  {% endfor %}
+</div>

@@ -1,0 +1,41 @@
+{% set live = run.status in ["queued", "running"] %}
+<div class="card progress-card job-run" id="job-run-{{ run.id }}"
+     {% if live %}hx-get="/jobs/runs/{{ run.id }}" hx-trigger="every 1s" hx-swap="outerHTML"{% endif %}>
+  <div class="dr-head">
+    <div class="dr-title">
+      <span class="dr-count">
+        {% if live %}<span class="spinner"></span> Searching {{ run.done_sources }} of {{ run.total_sources or "…" }} sources
+        {% elif run.status == "done" %}Run finished
+        {% elif run.status == "cancelled" %}Stopped early
+        {% else %}Run failed{% endif %}
+      </span>
+      <span class="muted small">{% if run.error %}{{ run.error }}{% else %}{{ run.message }}{% endif %}</span>
+    </div>
+    {% if live %}
+    <button class="btn" hx-post="/jobs/runs/{{ run.id }}/cancel" hx-target="#job-run-{{ run.id }}" hx-swap="outerHTML">Stop</button>
+    {% else %}
+    <button class="btn btn-quiet" type="button" onclick="this.closest('.job-run').remove()">Hide</button>
+    {% endif %}
+  </div>
+  {% if live and run.total_sources %}
+  <div class="progress-line flush"><div style="width: {{ (100 * run.done_sources / run.total_sources) | round | int }}%"></div></div>
+  {% endif %}
+  {% set problems = sources.values() | selectattr("status", "in", ["error", "refused", "not_configured"]) | list %}
+  {% if sources %}
+  <details class="progress-body run-sources" {% if problems and not live %}open{% endif %}>
+    <summary class="small">{{ sources | length }} source{{ "" if sources | length == 1 else "s" }}{% if problems %} · <span class="warn-text">{{ problems | length }} need attention</span>{% endif %}</summary>
+    <ul class="source-list">
+      {% for key, s in sources.items() %}
+      <li class="source-item">
+        <span class="source-dot {% if s.status == 'ok' %}ok{% elif s.status == 'running' %}running{% elif s.status in ['error', 'refused'] %}warn{% endif %}"></span>
+        <span>{{ s.label }}</span>
+        <span class="muted">{{ s.message }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+  {% if not live and run.status in ["done", "cancelled"] %}
+  <div hx-get="/jobs/searches/{{ run.search_id }}/results" hx-trigger="load" hx-target="#job-results" hx-swap="innerHTML"></div>
+  {% endif %}
+</div>

@@ -1,0 +1,85 @@
+{% set t = today %}
+{% if t.paused %}
+<div class="notice warn pause-banner">
+  <strong>Sending is paused.</strong> {{ t.paused }}
+  <form hx-post="/outreach/pause" hx-target="#out-board" hx-swap="innerHTML"><button class="btn btn-sm">Resume sending</button></form>
+</div>
+{% endif %}
+{% if not t.configured %}
+<div class="notice">Gmail isn't connected yet, so nothing can send. Follow the steps in <a href="/settings?tab=keys">Settings → Keys &amp; usage</a>
+  (about 5 minutes), then restart the site.</div>
+{% endif %}
+
+<div class="app-summary">
+  <div class="kpi"><span class="kpi-label">Sends left today</span><span class="kpi-num">{{ t.left_today }}</span>
+    <span class="kpi-sub">{{ t.sent_today }} of {{ t.cap }} (daily limit){% if not t.in_window %} · outside sending hours{% endif %}</span></div>
+  <div class="kpi"><span class="kpi-label">Queued</span><span class="kpi-num">{{ t.queued }}</span>
+    <span class="kpi-sub">{% if t.next %}next {{ t.next | localtime }}{% else %}nothing waiting{% endif %}</span></div>
+  <div class="kpi {% if t.replies %}kpi-pop{% endif %}"><span class="kpi-label">Replies needing you</span><span class="kpi-num">{{ t.replies }}</span></div>
+  <div class="kpi"><span class="kpi-label">Follow-ups today</span><span class="kpi-num">{{ t.followups_today }}</span></div>
+</div>
+
+{% if needs_me %}
+<section class="card needs-me">
+  <div class="dc-head"><h2>Replied: needs your response</h2></div>
+  <ul class="match-list">
+    {% for x in needs_me %}{% set c = x.c %}
+    <li><a class="match-row" href="#" hx-get="/outreach/{{ c.id }}" hx-target="#out-detail" hx-swap="innerHTML">
+      <span class="co-mark {{ c.company | avatar_class }}">{{ (c.company or "?")[:1] | upper }}</span>
+      <span class="mr-main"><span class="mr-title">{{ c.name or c.email }} · {{ c.company }}</span>
+        <span class="mr-sub">“{{ c.reply_snippet }}”</span></span>
+      <span class="due-tag">Reply</span></a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if not total %}
+<div class="card empty-list">
+  No contacts yet. Open an application on the <a href="/applications">Applications</a> board and pick people in its
+  <strong>Outreach</strong> section, or cold-pitch a small company from <a href="/outreach?view=companies">Find companies</a>.
+  Then run <code>/draft-outreach</code> in Claude Code.
+</div>
+{% else %}
+<div class="board out-board">
+  {% for col in columns %}
+  <section class="board-col {% if not col.cards %}is-empty{% endif %}">
+    <div class="col-head"><span class="col-title">{{ col.label }}</span><span class="col-count">{{ col.cards | length }}</span></div>
+    <div class="col-cards">
+      {% for x in col.cards %}{% set c = x.c %}
+      <button type="button" class="app-card" hx-get="/outreach/{{ c.id }}" hx-target="#out-detail" hx-swap="innerHTML">
+        <span class="ac-top">
+          <span class="co-mark {{ c.company | avatar_class }}">{{ (c.company or "?")[:1] | upper }}</span>
+          <span class="min0"><span class="ac-title">{{ c.name or c.email }}</span>
+            <span class="ac-co">{{ c.title or "No title" }} · {{ c.company }}</span></span>
+        </span>
+        <span class="ac-meta">
+          <span class="status-pill out-{{ c.status }}">{{ OUT_LABELS[c.status] }}</span>
+          {% if c.mode == "cold" %}<span class="flag flag-pitch">Cold pitch</span>{% endif %}
+          {% if x.job %}<span class="tag" title="{{ x.job.title }}">{{ x.job.title[:28] }}{% if x.job.title | length > 28 %}…{% endif %}</span>{% endif %}
+          {% if not x.queue_ok and c.status in ["picked", "draft_ready"] %}<span class="flag">Confirm address</span>{% endif %}
+          {% if c.edited %}<span class="tag">Edited</span>{% endif %}
+          {% if c.referred %}<span class="flag flag-good">Referred</span>{% endif %}
+          {% if c.paused_until %}<span class="tag">Away until {{ c.paused_until }}</span>{% endif %}
+        </span>
+      </button>
+      {% endfor %}
+      <p class="col-empty muted xsmall">Nothing here</p>
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% endif %}
+
+<details class="card gmail-test">
+  <summary><strong>Gmail connection test</strong> <span class="muted small">send yourself one email, reply to it, and check it's detected</span></summary>
+  <div class="row-actions">
+    <button class="btn btn-sm" hx-post="/outreach/test-email" hx-target="#test-result" {% if not gmail.configured %}disabled{% endif %}>Send test email to {{ gmail.address or "your Gmail" }}</button>
+    <button class="btn btn-sm" hx-post="/outreach/check-now" hx-target="#test-result" {% if not gmail.configured %}disabled{% endif %}>Check replies now</button>
+    <form hx-post="/outreach/pause" hx-target="#out-board" hx-swap="innerHTML"><button class="btn btn-sm btn-quiet">{{ "Resume sending" if t.paused else "Pause all sending" }}</button></form>
+  </div>
+  <div id="test-result">
+    {% if test.test %}<p class="muted small">Last test: {{ test.test.status }}{% if test.test.sent_at %} at {{ test.test.sent_at | localtime }}{% endif %}{% if test.test.error %} ({{ test.test.error }}){% endif %}.
+      {% if test.reply_seen %}Your reply was detected.{% elif test.test.sent_at %}No reply detected yet.{% endif %}</p>{% endif %}
+  </div>
+</details>

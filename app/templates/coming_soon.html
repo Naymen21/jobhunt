@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Job Hunt{% endblock %}
+{% block content %}
+<header class="top-bar"><h1>{{ title }}</h1></header>
+<section class="empty-state">
+  <div class="empty-art">{% include "partials/icon_" ~ (active if active != "jobs" else "jobs") ~ ".svg" %}</div>
+  <h2>Coming soon</h2>
+  <p class="muted">{{ blurb }}</p>
+  <div class="empty-actions">
+    <a class="btn primary" href="/finder#company">Go to Finder</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,8 @@
+* text=auto
+# Mac scripts must keep LF line endings; Windows scripts CRLF
+*.sh text eol=lf
+*.command text eol=lf
+*.bat text eol=crlf
+*.pdf binary
+*.png binary
+*.ico binary

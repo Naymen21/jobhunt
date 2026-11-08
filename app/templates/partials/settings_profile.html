@@ -1,0 +1,75 @@
+{% set p = profile %}
+{% macro field(name, label, type="text", placeholder="", wide=False) -%}
+<label class="form-field{% if wide %} wide{% endif %}">
+  <span class="field-label">{{ label }}</span>
+  <input type="{{ type }}" name="{{ name }}" value="{{ p[name] or '' }}" placeholder="{{ placeholder }}" autocomplete="off">
+</label>
+{%- endmacro %}
+<form class="card form-card" id="profile-form" hx-post="/settings/profile" hx-target="this" hx-swap="outerHTML">
+  <div class="form-section">
+    <h2>About you</h2>
+    <p class="muted small">Used in later phases to fill in applications and sign emails. Never sent anywhere by this page.</p>
+    <div class="form-grid">
+      {{ field("name", "Full name", placeholder="Jane Doe") }}
+      {{ field("email", "Email", "email", "you@example.com") }}
+      {{ field("phone", "Phone", "tel") }}
+      {{ field("location", "Location", placeholder="City, State") }}
+    </div>
+  </div>
+  <div class="form-section">
+    <h2>School</h2>
+    <p class="muted small">Your level decides which postings count as "eligible for you", which ones become pitch
+      candidates, and how cover letters and emails introduce you.</p>
+    <div class="form-grid">
+      <label class="form-field"><span class="field-label">I'm a…</span>
+        <select name="student_level">
+          {% for k, label in LEVELS.items() %}<option value="{{ k }}" {% if (p.student_level or "high_school") == k %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select></label>
+      {{ field("school", "School", placeholder="University or high school") }}
+      {{ field("grad_year", "Graduation year", placeholder="2027") }}
+      {{ field("degree_program", "Major or planned field", placeholder="BS Computer Science · or: planning to study CS") }}
+      {{ field("work_authorization", "Work authorization", placeholder="e.g. US citizen, F-1 student", wide=True) }}
+    </div>
+  </div>
+  <div class="form-section">
+    <h2>Home area</h2>
+    <p class="muted small">Companies and jobs here get a <span class="local-tag">Local</span> tag and rank higher; Built In
+      lists startups from this state. Leave it empty if you only want remote work.</p>
+    <div class="form-grid">
+      <label class="form-field"><span class="field-label">Quick fill</span>
+        <select id="area-preset" onchange="const o=this.selectedOptions[0];if(o.dataset.state){this.form.home_state.value=o.dataset.state;this.form.home_cities.value=o.dataset.cities;}">
+          <option value="">Choose a metro area…</option>
+          {% for name, (st, cities) in AREA_PRESETS.items() %}<option data-state="{{ st }}" data-cities="{{ cities }}">{{ name }}</option>{% endfor %}
+        </select></label>
+      <label class="form-field"><span class="field-label">State</span>
+        <select name="home_state"><option value="">None (remote only)</option>
+          {% for code, name in US_STATES.items() %}<option value="{{ code }}" {% if p.home_state == code %}selected{% endif %}>{{ name | title }}</option>{% endfor %}
+        </select></label>
+      <label class="form-field wide"><span class="field-label">Cities that count as local</span>
+        <textarea name="home_cities" rows="2" class="prose-area" placeholder="Comma-separated: austin, round rock, cedar park">{{ p.home_cities or "" }}</textarea>
+        <span class="hint">The state on its own already counts; cities catch listings that only name a city.</span></label>
+    </div>
+  </div>
+  <div class="form-section">
+    <h2>Links</h2>
+    <div class="form-grid">
+      {{ field("linkedin_url", "LinkedIn URL", "text", "www.linkedin.com/in/your-name") }}
+      {{ field("github_url", "GitHub URL", "text", "github.com/your-name") }}
+      {{ field("portfolio_url", "Portfolio URL", "text", "yourname.com") }}
+      {{ field("resume_link", "Resume link (for email signatures)", "text", "drive.google.com/file/d/…") }}
+    </div>
+    <p class="muted xsmall">Resume link: upload your resume PDF to Google Drive, choose Share → General access → "Anyone with the link", and paste the link here. Outreach emails link to it instead of attaching a file.</p>
+    <p class="muted xsmall">Only the public profile link is stored. This project never asks for or keeps a LinkedIn login or cookies.</p>
+  </div>
+  <div class="form-section">
+    <h2>What you're looking for</h2>
+    <label class="form-field wide">
+      <span class="field-label">About me</span>
+      <textarea name="about" rows="6" class="prose-area" placeholder="The roles, teams and kinds of companies you want, and anything you'd like cover letters to mention.">{{ p.about or "" }}</textarea>
+    </label>
+  </div>
+  <div class="form-actions">
+    <button class="btn primary" type="submit">Save profile</button>
+    {% if saved %}<span class="saved-note">Saved</span>{% elif p.updated_at %}<span class="muted small">Last saved {{ p.updated_at | ago }}</span>{% endif %}
+  </div>
+</form>

@@ -1,0 +1,25 @@
+<div class="card cold-results">
+  <div class="sec-head"><h2>{{ total }} compan{{ "y" if total == 1 else "ies" }}</h2>
+    {% if total > rows | length %}<span class="muted small">showing the first {{ rows | length }}: narrow the filters to see others</span>{% endif %}</div>
+  {% if not rows %}
+  <p class="empty-list">No companies match. Try a wider size range, fewer keywords, or "Include companies of unknown size".
+    New companies arrive with each autopilot run (YC directory, Built In for your home state, Hacker News).</p>
+  {% else %}
+  <ul class="match-list">
+    {% for co in rows %}
+    <li><a class="match-row" href="#" hx-get="/outreach/companies/detail?k={{ co.key | urlencode }}" hx-target="#out-detail" hx-swap="innerHTML">
+      <span class="co-mark {{ co.name | avatar_class }}">{{ (co.name or "?")[:1] | upper }}</span>
+      <span class="mr-main">
+        <span class="mr-title">{{ co.name }}
+          {% if co.employees %}<span class="size-tag" title="{{ co.employees_source }}{% if co.employees_at %}, {{ co.employees_at[:10] }}{% endif %}">~{{ co.employees }} people</span>
+          {% else %}<span class="size-tag muted">size unknown</span>{% endif %}
+          {% if co.local %}<span class="local-tag">Local</span>{% endif %}
+          {% if co.cold_status == "dismissed" %}<span class="tag">Hidden</span>{% endif %}
+          {% if co.contacted %}<span class="tag">Contacted</span>{% endif %}</span>
+        <span class="mr-sub">{{ co.one_liner or co.industry or "No description yet" }}</span>
+        <span class="mr-sub xsmall muted">{{ co.location or "Location not listed" }} · {{ SOURCE_LABELS.get(co.source, co.source) }}{% if co.hiring and co.source == "yc" %} · hiring on YC{% endif %}</span>
+      </span></a></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>

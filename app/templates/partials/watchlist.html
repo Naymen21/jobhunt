@@ -1,0 +1,74 @@
+<div id="watchlist" class="stack">
+  <form class="search-card" hx-post="/jobs/watchlist" hx-target="#watchlist" hx-swap="outerHTML" hx-indicator="#watch-spin"
+        hx-disabled-elt="find button">
+    <label class="field-label" for="watch-input">Add a company</label>
+    <div class="search-row">
+      <span class="search-icon">{% include "partials/icon_building.svg" %}</span>
+      <input id="watch-input" name="query" placeholder="Company name, careers page, or job board link" required autocomplete="off">
+      <button type="submit" class="btn primary">Detect and add <span id="watch-spin" class="spinner htmx-indicator"></span></button>
+    </div>
+    <p class="muted small hint-line">Finds the company's website, reads its careers page (robots.txt respected), and looks for a Greenhouse,
+      Lever or Ashby board. Takes up to half a minute. If nothing is found you can enter the board by hand.</p>
+  </form>
+
+  {% if error %}<div class="inline-error">{{ error }}</div>{% endif %}
+  {% if notice %}<div class="notice">{{ notice }}</div>{% endif %}
+  {% if warning %}<div class="notice warn">{{ warning }}</div>{% endif %}
+
+  <div class="table-card">
+    <div class="table-meta">
+      <span><strong>{{ feeds_count }}</strong> with a job feed · <strong>{{ manual_count }}</strong> to check manually</span>
+      <button class="btn btn-sm" hx-post="/jobs/watchlist/test-all" hx-target="#watchlist" hx-swap="outerHTML" hx-disabled-elt="this">
+        Test all feeds <span class="spinner htmx-indicator"></span></button>
+    </div>
+    <div class="table-scroll">
+      <table class="table watch-table">
+        <thead><tr><th>Company</th><th>Job board</th><th>Status</th><th class="right">Open jobs</th><th>Checked</th><th class="right">Actions</th></tr></thead>
+        <tbody>
+        {% for c in companies %}
+          <tr class="{% if highlight == c.id %}is-highlight{% endif %}{% if not c.ats %} is-manual{% endif %}">
+            <td>
+              <div class="who-name">{{ c.name }}</div>
+              {% if c.domain %}<div class="muted xsmall">{{ c.domain }}</div>{% endif %}
+            </td>
+            <td class="small">
+              {% if c.ats %}<span class="src-chip src-{{ c.ats }}">{{ FEEDS[c.ats].label }}</span>
+                <a class="mono xsmall" href="{{ FEEDS[c.ats].board_url(c.board) }}" target="_blank" rel="noopener noreferrer">{{ c.board }}</a>
+                {% if c.detected_how %}<div class="muted xsmall">{{ c.detected_how }}</div>{% endif %}
+              {% else %}<span class="muted">No public feed</span>{% endif %}
+            </td>
+            <td class="small">
+              {% if not c.ats %}<span class="badge badge-catch_all">Check manually</span>
+                {% if c.careers_url %}<div><a class="xsmall" href="{{ c.careers_url }}" target="_blank" rel="noopener noreferrer">Open careers page</a></div>{% endif %}
+              {% elif c.status == "ok" %}<span class="badge badge-valid">Working</span>
+              {% elif c.status == "error" %}<span class="badge badge-invalid">Feed failed</span><div class="muted xsmall">{{ c.message }}</div>
+              {% else %}<span class="badge badge-unknown">Not checked yet</span>{% endif %}
+            </td>
+            <td class="right">{{ c.job_count if c.job_count is not none else "" }}</td>
+            <td class="small nowrap muted">{{ c.last_checked | ago if c.last_checked else "" }}</td>
+            <td class="right nowrap">
+              {% if c.ats %}<button class="btn btn-sm" hx-post="/jobs/watchlist/{{ c.id }}/test" hx-target="#watchlist" hx-swap="outerHTML">Test feed</button>{% endif %}
+              <details class="manual-dd" {% if open_manual == c.id %}open{% endif %}>
+                <summary class="btn btn-sm">{{ "Change" if c.ats else "Enter board" }}</summary>
+                <form class="manual-pop" hx-post="/jobs/watchlist/{{ c.id }}/manual" hx-target="#watchlist" hx-swap="outerHTML">
+                  <label class="form-field"><span class="field-label">Job board</span>
+                    <select name="ats">
+                      {% for a in ATS_TYPES %}<option value="{{ a }}" {% if c.ats == a %}selected{% endif %}>{{ FEEDS[a].label }}</option>{% endfor %}
+                      <option value="none" {% if not c.ats %}selected{% endif %}>No public feed (check manually)</option>
+                    </select></label>
+                  <label class="form-field"><span class="field-label">Board name or link</span>
+                    <input name="board" value="{{ c.board or '' }}" placeholder="riotgames or jobs.lever.co/…"></label>
+                  <p class="muted xsmall">The board name is the part after the site in the job board link, e.g. job-boards.greenhouse.io/<strong>riotgames</strong>.</p>
+                  <button class="btn primary btn-sm" type="submit">Save and test</button>
+                </form>
+              </details>
+              <button class="btn btn-sm btn-quiet" hx-post="/jobs/watchlist/{{ c.id }}/delete" hx-target="#watchlist" hx-swap="outerHTML"
+                      hx-confirm="Remove {{ c.name }} from the watchlist?">Remove</button>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+{% import "partials/macros.html" as m %}
+{% set labels = {"valid": "Valid", "invalid": "Invalid", "catch_all": "Catch-all", "unknown": "Unknown"} %}
+<article class="result-card status-{{ r.status }}">
+  <div class="result-top">
+    <div class="result-id">
+      <div class="result-email">{{ r.email }}</div>
+      <div class="result-sub"><span class="badge badge-{{ r.status }}">{{ labels[r.status] }}</span><span class="muted small">{{ r.reason }}</span></div>
+    </div>
+    <div class="pc-score">{{ m.ring(r.confidence, "lg") }}<span class="muted xsmall">confidence</span></div>
+  </div>
+
+  <ul class="checks">
+    {% for c in r.checks %}
+    <li class="check {% if c.passed is true %}pass{% elif c.passed is false %}fail{% else %}skip{% endif %}">
+      <span class="check-mark">{% if c.passed is true %}&#10003;{% elif c.passed is false %}&#10007;{% else %}&ndash;{% endif %}</span>
+      <span class="check-name">{{ CHECK_LABELS.get(c.name, c.name) }}</span>
+      <span class="check-detail">{{ c.detail }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <details class="smtp-details">
+    <summary>Technical details{% if r.smtp %} &middot; {{ r.smtp | length }} SMTP replies{% endif %}</summary>
+    {% if r.mx_hosts %}
+    <p class="small"><span class="muted">MX hosts:</span> <code>{{ r.mx_hosts | join(", ") }}</code></p>
+    {% endif %}
+    {% if r.smtp %}
+    <table class="mini">
+      <thead><tr><th>Stage</th><th>Code</th><th>Server reply</th></tr></thead>
+      <tbody>
+      {% for s in r.smtp %}
+        <tr><td><code>{{ s.stage }}</code></td><td><code class="code-{{ (s.code // 100) }}">{{ s.code }}</code></td><td class="small">{{ s.message }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="small muted">No SMTP conversation took place.</p>
+    {% endif %}
+    <p class="small muted">Checked {{ r.checked_at | ago }} &middot; {{ r.duration_ms }} ms{% if from_history %} &middot; from history{% endif %}</p>
+  </details>
+</article>

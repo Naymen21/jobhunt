@@ -1,0 +1,77 @@
+<div id="resumes" class="stack">
+  <form class="card upload-card" hx-post="/settings/resumes" hx-target="#resumes" hx-swap="outerHTML" hx-encoding="multipart/form-data">
+    <div>
+      <h2>Upload a resume</h2>
+      <p class="muted small">PDF or Word (.docx). The text is read out so you can check it, and the original file is kept.
+        Your default resume is what job match scores compare against.</p>
+    </div>
+    <div class="upload-fields">
+      <label class="form-field"><span class="field-label">Name this version</span>
+        <input name="label" placeholder="e.g. Game programming, Fall 2026"></label>
+      <div class="form-field"><span class="field-label">File</span>
+        <label class="file-pick">
+          <input class="sr-only" type="file" name="file" required
+                 accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                 onchange="this.closest('.file-pick').querySelector('[data-file-name]').textContent = this.files[0] ? this.files[0].name : 'No file chosen'">
+          <span class="btn btn-sm">Choose file</span>
+          <span class="file-name" data-file-name>No file chosen</span>
+        </label>
+      </div>
+    </div>
+    <div class="upload-actions">
+      <button class="btn primary" type="submit">Upload resume <span class="spinner htmx-indicator"></span></button>
+      <span class="muted xsmall">PDF or .docx, up to 10 MB</span>
+    </div>
+    {% if error %}<div class="inline-error">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="notice">{{ notice }}</div>{% endif %}
+  </form>
+
+  {% if resumes %}
+  <div class="table-card">
+    <div class="table-meta"><span><strong>{{ resumes | length }}</strong> version{{ "" if resumes | length == 1 else "s" }}</span></div>
+    <div class="table-scroll">
+      <table class="table resume-table">
+        <thead><tr><th>Version</th><th>File</th><th>Uploaded</th><th>Text</th><th class="right">Actions</th></tr></thead>
+        <tbody>
+        {% for r in resumes %}
+          <tr class="{% if selected and selected.id == r.id %}is-selected{% endif %}">
+            <td><span class="who-name">{{ r.label }}</span> {% if r.is_default %}<span class="pill dept-executive"><span class="pill-dot"></span>Default</span>{% endif %}</td>
+            <td class="small"><a href="/settings/resumes/{{ r.id }}/file">{{ r.filename }}</a> <span class="muted">{{ r.kind | upper }} · {{ (r.size / 1024) | round | int }} KB</span></td>
+            <td class="small nowrap">{{ r.uploaded_at | ago }}</td>
+            <td class="small nowrap">{{ "{:,}".format(r.text | length) }} chars</td>
+            <td class="right nowrap">
+              <button class="btn btn-sm" hx-get="/settings/resumes/{{ r.id }}" hx-target="#resumes" hx-swap="outerHTML">Preview</button>
+              {% if not r.is_default %}<button class="btn btn-sm" hx-post="/settings/resumes/{{ r.id }}/default" hx-target="#resumes" hx-swap="outerHTML">Make default</button>{% endif %}
+              <button class="btn btn-sm btn-quiet" hx-post="/settings/resumes/{{ r.id }}/delete" hx-target="#resumes" hx-swap="outerHTML"
+                      hx-confirm="Delete {{ r.label }}? The stored file is removed too.">Delete</button>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if selected %}
+  <div class="card preview-card">
+    <div class="preview-head">
+      <div>
+        <h2>{{ selected.label }}</h2>
+        <p class="muted small">Text read from {{ selected.filename }}. If this looks scrambled, try exporting the resume as a different PDF.</p>
+      </div>
+    </div>
+    <div class="skills-line">
+      <span class="why-label">Skills recognised</span>
+      {% if selected_skills %}
+        <div class="chip-row">{% for s in selected_skills %}<span class="tag">{{ s }}</span>{% endfor %}</div>
+      {% else %}
+        <span class="muted small">None from the skill list. Match scores will rely on the search filters only.</span>
+      {% endif %}
+    </div>
+    <pre class="resume-text">{{ selected.text }}</pre>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="card empty-list">No resumes yet. Upload one above; the first one becomes your default.</div>
+  {% endif %}
+</div>

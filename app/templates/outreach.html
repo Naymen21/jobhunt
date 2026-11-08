@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Outreach · Job Hunt{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Outreach</h1>
+      <p class="muted">{% if view == "companies" %}Small companies to email directly, no posting needed: pick one, pick a founder or
+        engineering lead, and <code>/draft-outreach</code> writes a cold pitch for you to review.{% else %}Emails to people at the
+        companies you're applying to, and cold pitches.{% endif %} Nothing sends until you approve it, and sending
+        follows your daily limits on weekdays 8am–5pm.</p>
+    </div>
+    <nav class="seg" aria-label="Outreach sections">
+      <a class="seg-opt {% if view != 'companies' %}active{% endif %}" href="/outreach">{% include "partials/icon_people.svg" %}People</a>
+      <a class="seg-opt {% if view == 'companies' %}active{% endif %}" href="/outreach?view=companies">{% include "partials/icon_building.svg" %}Find companies</a>
+    </nav>
+  </div>
+  {% if view == "companies" %}
+    {% include "partials/cold_page.html" %}
+  {% else %}
+  <div id="out-board" hx-get="/outreach/board" hx-trigger="outreachChanged from:body, every 60s" hx-swap="innerHTML">
+    {% include "partials/out_board.html" %}
+  </div>
+  {% endif %}
+</div>
+<div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+<aside class="drawer drawer-wide" id="out-detail" aria-label="Contact" hidden></aside>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  const drawer = document.getElementById("out-detail"), backdrop = document.getElementById("drawer-backdrop");
+  const close = () => { drawer.hidden = backdrop.hidden = true; };
+  document.body.addEventListener("htmx:afterSwap", (ev) => {
+    if (ev.detail.target === drawer) { drawer.hidden = backdrop.hidden = false; }
+  });
+  backdrop.addEventListener("click", close);
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") close(); });
+  document.addEventListener("click", async (ev) => {
+    if (ev.target.closest("[data-close-drawer]")) close();
+    const btn = ev.target.closest("[data-copy-from]");
+    if (btn) {
+      const el = document.getElementById(btn.dataset.copyFrom);
+      const text = el ? (el.value !== undefined ? el.value : el.innerText) : "";
+      const label = btn.textContent;
+      try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; } catch { btn.textContent = "Copy failed"; }
+      setTimeout(() => { btn.textContent = label; }, 1400);
+    }
+  });
+  const open = new URLSearchParams(location.search).get("contact");
+  if (open) document.addEventListener("DOMContentLoaded", () => htmx.ajax("GET", `/outreach/${open}`, {target: "#out-detail", swap: "innerHTML"}));
+  const co = new URLSearchParams(location.search).get("company");
+  if (co) document.addEventListener("DOMContentLoaded", () => htmx.ajax("GET", `/outreach/companies/detail?k=${encodeURIComponent(co)}`, {target: "#out-detail", swap: "innerHTML"}));
+})();
+</script>
+{% endblock %}

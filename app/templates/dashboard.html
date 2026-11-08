@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m %}
+{% block title %}Overview · Job Hunt{% endblock %}
+{% block content %}
+<div class="page dash">
+  <div class="page-head">
+    <div>
+      <p class="muted small dash-date">{{ today }}</p>
+      <h1>{{ greeting }}{% if d.first_name %}, {{ d.first_name }}{% endif %}</h1>
+      <p class="muted">{% if d.new_jobs %}You have <strong class="pop-text">{{ d.new_jobs }} new job{{ "" if d.new_jobs == 1 else "s" }}</strong> from your saved searches.
+        {% elif d.searches %}No new jobs since your last runs.{% else %}Start by creating a saved search.{% endif %}</p>
+    </div>
+    <div class="dash-actions">
+      <a class="btn" href="/finder#company">{% include "partials/icon_people.svg" %}Find people</a>
+      <a class="btn primary" href="/jobs">{% include "partials/icon_jobs.svg" %}Open jobs</a>
+    </div>
+  </div>
+
+  {# ---- headline numbers ---- #}
+  <div class="kpis">
+    <a class="kpi kpi-pop" href="/jobs">
+      <span class="kpi-label">New jobs</span>
+      <span class="kpi-num">{{ d.new_jobs }}</span>
+      <span class="kpi-sub">from {{ d.searches | length }} saved search{{ "" if d.searches | length == 1 else "es" }}</span>
+    </a>
+    <a class="kpi" href="/jobs">
+      <span class="kpi-label">Saved jobs</span>
+      <span class="kpi-num">{{ d.saved_total }}</span>
+      <span class="kpi-sub">ready for Applications later</span>
+    </a>
+    <a class="kpi" href="/jobs?tab=watchlist">
+      <span class="kpi-label">Companies watched</span>
+      <span class="kpi-num">{{ d.watch_feeds + d.watch_manual }}</span>
+      <span class="kpi-sub">{{ "{:,}".format(d.open_jobs) }} open jobs on their boards</span>
+    </a>
+    <a class="kpi" href="/finder#company">
+      <span class="kpi-label">People found</span>
+      <span class="kpi-num">{{ d.people }}</span>
+      <span class="kpi-sub">at {{ d.domains }} compan{{ "y" if d.domains == 1 else "ies" }}</span>
+    </a>
+  </div>
+
+  <div class="dash-grid">
+    <div class="dash-main">
+      {# ---- best matches ---- #}
+      <section class="card dash-card">
+        <div class="dc-head">
+          <h2>Best matches right now</h2>
+          <a class="link-btn" href="/jobs">See all</a>
+        </div>
+        {% if d.top %}
+        <ul class="match-list">
+          {% for t in d.top %}
+          {% set j = t.job %}
+          <li>
+            <a class="match-row" href="/jobs?search={{ t.search_id }}">
+              <span class="co-mark {{ j.company | avatar_class }}" aria-hidden="true">{{ (j.company or "?")[:1] | upper }}</span>
+              <span class="mr-main">
+                <span class="mr-title">{% if t.new %}<span class="new-dot" title="New since the previous run"></span>{% endif %}{{ j.title }}</span>
+                <span class="mr-sub">{{ j.company }} · {{ (j.location or "Location not stated").split(";")[0] }}{% if j.work_mode %} · {{ WORK_MODE_LABELS[j.work_mode] }}{% endif %}</span>
+              </span>
+              {% if t.flags %}<span class="flag" title="{{ t.flags | map(attribute='label') | join(', ') }}">{{ t.flags | length }} flag{{ "" if t.flags | length == 1 else "s" }}</span>{% endif %}
+              {{ m.ring(t.score, "sm") }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% if not d.has_resume %}<p class="muted xsmall dc-foot">Scores are capped at 50 until you <a href="/settings?tab=resumes">upload a resume</a>.</p>{% endif %}
+        {% else %}
+        <div class="empty-list">No results yet. <a href="/jobs">Run a saved search</a> to see matches here.</div>
+        {% endif %}
+      </section>
+
+      {# ---- saved jobs ---- #}
+      <section class="card dash-card">
+        <div class="dc-head">
+          <h2>Saved jobs</h2>
+          {% if d.saved_total %}<span class="muted small">{{ d.saved_total }} saved</span>{% endif %}
+        </div>
+        {% if d.saved %}
+        <ul class="match-list">
+          {% for j in d.saved %}
+          <li><a class="match-row" href="{{ j.url }}" target="_blank" rel="noopener noreferrer">
+            <span class="co-mark {{ j.company | avatar_class }}" aria-hidden="true">{{ (j.company or "?")[:1] | upper }}</span>
+            <span class="mr-main"><span class="mr-title">{{ j.title }}</span><span class="mr-sub">{{ j.company }} · opens the original posting</span></span>
+          </a></li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-list">Nothing saved yet. Open a job and press <strong>Save</strong> to keep it here.</div>
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="dash-side">
+      {% if d.setup_left %}
+      <section class="card dash-card">
+        <div class="dc-head"><h2>Getting set up</h2><span class="muted small">{{ d.setup | length - d.setup_left }} of {{ d.setup | length }}</span></div>
+        <div class="bar setup-bar"><div class="bar-fill fill-accent" style="width: {{ (100 * (d.setup | length - d.setup_left) / d.setup | length) | round | int }}%"></div></div>
+        <ul class="checklist">
+          {% for s in d.setup %}
+          <li class="{% if s.done %}done{% endif %}">
+            <span class="check-dot">{% if s.done %}{% include "partials/icon_check.svg" %}{% endif %}</span>
+            {% if s.done %}<span>{{ s.label }}</span>{% else %}<a href="{{ s.href }}">{{ s.label }}</a>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+
+      <section class="card dash-card">
+        <div class="dc-head"><h2>Saved searches</h2><a class="link-btn" href="/jobs?edit=new">New</a></div>
+        {% if d.searches %}
+        <ul class="search-mini">
+          {% for s in d.searches %}
+          <li>
+            <a href="/jobs?search={{ s.id }}" class="sm-main">
+              <span class="sm-name">{{ s.name }}</span>
+              <span class="muted xsmall">{% if s.last_run_at %}{{ s.last_total }} jobs · ran {{ s.last_run_at | ago }}{% else %}not run yet{% endif %}</span>
+            </a>
+            {% if s.last_new %}<span class="pop-pill">{{ s.last_new }} new</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-list">No saved searches. <a href="/jobs?edit=new">Create one</a>.</div>
+        {% endif %}
+      </section>
+
+      <section class="card dash-card">
+        <div class="dc-head"><h2>Watchlist</h2><a class="link-btn" href="/jobs?tab=watchlist">Manage</a></div>
+        <div class="health">
+          <div><span class="dot dot-ok"></span>{{ d.watch_ok }} of {{ d.watch_feeds }} job feeds working</div>
+          {% if d.watch_failed %}<div class="warn-text"><span class="dot dot-warn"></span>{{ d.watch_failed | length }} failed: {{ d.watch_failed | map(attribute="name") | join(", ") }}</div>{% endif %}
+          <div><span class="dot dot-off"></span>{{ d.watch_manual }} to check by hand</div>
+        </div>
+      </section>
+
+      <section class="card dash-card">
+        <div class="dc-head"><h2>LinkedIn credit</h2><a class="link-btn" href="/settings?tab=keys">Details</a></div>
+        <div hx-get="/settings/usage/apify" hx-trigger="load" hx-swap="innerHTML"><p class="muted small"><span class="spinner"></span> Checking Apify…</p></div>
+      </section>
+
+      {% if d.recent_domains %}
+      <section class="card dash-card">
+        <div class="dc-head"><h2>Recently searched companies</h2></div>
+        <div class="chips">
+          {% for dom, n in d.recent_domains %}<a class="chip" href="/finder?company={{ dom.domain }}#company">{{ dom.domain }} <span class="chip-n">{{ n }}</span></a>{% endfor %}
+        </div>
+      </section>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

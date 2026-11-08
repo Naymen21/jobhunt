@@ -1,0 +1,27 @@
+{% import "partials/macros.html" as m %}
+<div class="card picker">
+  {% if res.candidates %}
+  <div class="picker-head">
+    <div class="info-title">Which "{{ res.query }}" did you mean?</div>
+    <p class="muted small">These websites could belong to it. Pick one and it'll be remembered for next time.</p>
+  </div>
+  <ul class="picker-list">
+    {% for c in res.candidates %}
+    <li class="picker-row">
+      {{ m.ring(c.score, "sm", "How well this site matches the name") }}
+      <div class="picker-main">
+        <div class="picker-domain">{{ c.domain }}</div>
+        <div class="muted small">{{ c.title or "Couldn't read the homepage" }}</div>
+        <div class="picker-reasons">{% for why in c.reasons %}<span class="tag">{{ why }}</span>{% endfor %}</div>
+      </div>
+      <button type="button" class="btn {% if loop.first %}primary{% endif %}" hx-post="{{ action }}" hx-target="closest .result-slot" hx-swap="innerHTML"
+              hx-vals='{{ dict(extra, domain=c.domain, company_query=res.query) | tojson }}'>Use this</button>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted small picker-foot">Not listed? Type the website instead, for example <span class="mono">company.com</span>.</p>
+  {% else %}
+  <div class="info-title">Couldn't find a website for "{{ res.query }}"</div>
+  <p class="muted small">None of the likely domains had a site that matches the name. Type the company's website instead, for example <span class="mono">company.com</span>.</p>
+  {% endif %}
+</div>

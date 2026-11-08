@@ -1,0 +1,19 @@
+# your own keys, database, resumes, caches and backups never go in the repo
+.env
+data/
+dist/
+*.db
+*.db-journal
+*.sqlite
+*.log
+# Python / tools
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

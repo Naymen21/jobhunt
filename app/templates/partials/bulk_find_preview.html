@@ -1,0 +1,23 @@
+{% if p.error %}
+<div class="inline-error">{{ p.error }}</div>
+{% else %}
+<form class="card steps" hx-post="/finder/bulk-find" hx-target="#bulk-find-slot" hx-swap="innerHTML" hx-include="#bulk-find-input">
+  <div class="step">
+    <span class="step-num done">3</span>
+    <div class="step-body">
+      <div class="step-title">{{ p.rows | length }} people ready</div>
+      <p class="muted small">Name from <strong>{{ p.columns.name }}</strong>, company from <strong>{{ p.columns.company }}</strong>.
+        {% if p.skipped %}{{ p.skipped }} row(s) skipped (missing a name or company).{% endif %}
+        {% if p.truncated %}Only the first 500 rows will run.{% endif %}</p>
+      <table class="table compact">
+        <thead><tr><th>Name</th><th>Company</th></tr></thead>
+        <tbody>{% for r in p.rows[:5] %}<tr><td>{{ r.name }}</td><td>{{ r.company }}</td></tr>{% endfor %}</tbody>
+      </table>
+      {% if p.rows | length > 5 %}<p class="muted xsmall">and {{ p.rows | length - 5 }} more</p>{% endif %}
+      <label class="check-label"><input type="checkbox" name="search_unsearched" value="true">
+        Also search companies I haven't searched yet (better guesses, about 1-2 minutes per company)</label>
+      <div><button type="submit" class="btn primary">Find {{ p.rows | length }} email{{ "" if p.rows | length == 1 else "s" }}</button></div>
+    </div>
+  </div>
+</form>
+{% endif %}

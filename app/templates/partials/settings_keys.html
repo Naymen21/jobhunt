@@ -1,0 +1,80 @@
+<div class="stack">
+  <div class="table-card">
+    <div class="table-meta"><span><strong>API keys</strong></span><span class="muted small">Read from <code>.env</code>. Values are never shown or editable here.</span></div>
+    <div class="table-scroll">
+      <table class="table keys-table">
+        <thead><tr><th>Key</th><th>Status</th><th>Used for</th><th>How to get it</th></tr></thead>
+        <tbody>
+        {% for k in keys %}
+          <tr>
+            <td><code>{{ k.name }}</code></td>
+            <td class="nowrap">{% if k.set %}<span class="badge badge-valid">Set</span> <span class="muted mono xsmall">••••••••</span>
+                {% else %}<span class="badge badge-unknown">Not set</span>{% endif %}</td>
+            <td class="small">{{ k.used_for }}</td>
+            <td class="small muted">{{ k.how }}</td>
+          </tr>
+        {% endfor %}
+          <tr>
+            <td><code>ANTHROPIC_API_KEY</code></td>
+            <td class="nowrap">{% if anthropic_key_present %}<span class="badge badge-invalid">Present: remove it</span>
+                {% else %}<span class="badge badge-valid">Not present</span>{% endif %}</td>
+            <td class="small">Never used. AI work runs through Claude Code commands, not the website.</td>
+            <td class="small muted">{% if anthropic_key_present %}It is set in this computer's environment or .env. The project rules say it must not be.{% else %}Nothing to do.{% endif %}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Adding a key</h2>
+    <ol class="steps-list small">
+      <li>Open <code>{{ platform().env_file }}</code> in a text editor{% if platform().mac %} (TextEdit: Format → Make Plain Text; the file is hidden in Finder, press Cmd+Shift+. to show it){% endif %}. If it doesn't exist, copy <code>.env.example</code> to <code>.env</code>.</li>
+      <li>Add a line like <code>APIFY_TOKEN=apify_api_xxxxxxxx</code> (no quotes, no spaces).</li>
+      <li>Restart the site: stop <code>run.py</code> and start it again with <code>.venv\Scripts\python run.py</code>.</li>
+    </ol>
+    <p class="muted xsmall">The .env file is in .gitignore, so it isn't shared if this folder is ever put in git.</p>
+  </div>
+
+  <div class="card">
+    <h2>Connecting Gmail (for Outreach)</h2>
+    <p class="muted small">Free, about 5 minutes. jobhunt sends plain-text emails you've approved through Gmail's normal
+      mail server and reads replies to those threads only (read-only). The password never leaves .env.</p>
+    <ol class="steps-list small">
+      <li>Go to <strong>myaccount.google.com → Security</strong> and turn on <strong>2-Step Verification</strong> (App Passwords need it).</li>
+      <li>Open <strong>myaccount.google.com/apppasswords</strong>, type a name like <em>jobhunt</em>, and press <strong>Create</strong>.</li>
+      <li>Copy the 16-character password Google shows (spaces don't matter). You won't see it again.</li>
+      <li>In <code>{{ platform().env_file }}</code>, add two lines:<br>
+        <code>GMAIL_ADDRESS=you@gmail.com</code><br><code>GMAIL_APP_PASSWORD=abcd efgh ijkl mnop</code></li>
+      <li>Optional: <code>GMAIL_DISPLAY_NAME=Your Name</code> so emails show your name.</li>
+      <li>Restart the site, open <strong>Outreach → Gmail connection test</strong>, and send yourself a test email.</li>
+    </ol>
+    <p class="muted xsmall">Gmail's IMAP access is on by default for personal accounts. If replies aren't detected, check
+      Gmail → Settings → Forwarding and POP/IMAP → Enable IMAP. To revoke access anytime, delete the App Password.</p>
+  </div>
+
+  <div class="usage-grid">
+    <div class="card">
+      <h2>Apify this month</h2>
+      <div hx-get="/settings/usage/apify" hx-trigger="load" hx-swap="innerHTML">
+        <p class="muted small"><span class="spinner"></span> Checking Apify…</p>
+      </div>
+      <dl class="facts small">
+        <div><dt>Actor</dt><dd><code>{{ apify_actor }}</code> (public listings, no LinkedIn login)</dd></div>
+        <div><dt>Budget guard</dt><dd>refuses a run that would pass {{ (budget_fraction * 100) | round | int }}% of the monthly credit; every run has a hard spending cap</dd></div>
+        <div><dt>Default size</dt><dd>{{ max_results }} results per run</dd></div>
+      </dl>
+    </div>
+    <div class="card">
+      <h2>Counted on this computer</h2>
+      <p class="muted small">Since the 1st of this month.</p>
+      <div class="mini-stats">
+        <div><span class="stat-num">{{ usage.get("feed_request", 0) | int }}</span><span class="muted small">job board feed requests (free)</span></div>
+        <div><span class="stat-num">{{ usage.get("apify_run", 0) | int }}</span><span class="muted small">Apify runs</span></div>
+        <div><span class="stat-num">{{ usage.get("apify_results", 0) | int }}</span><span class="muted small">LinkedIn results</span></div>
+        <div><span class="stat-num">${{ "%.2f" | format(usage.get("apify_cost_usd", 0)) }}</span><span class="muted small">Apify cost (estimate)</span></div>
+        <div><span class="stat-num">{{ usage.get("apify_refused", 0) | int }}</span><span class="muted small">runs refused by the budget guard</span></div>
+      </div>
+    </div>
+  </div>
+</div>

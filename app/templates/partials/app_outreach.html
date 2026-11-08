@@ -1,0 +1,104 @@
+{% import "partials/macros.html" as m %}
+<div id="app-outreach-{{ a.id }}" {% if searching %}hx-get="/applications/{{ a.id }}/outreach" hx-trigger="every 5s" hx-swap="outerHTML"{% endif %}>
+  <div class="sec-head"><h3>Outreach</h3><a class="link-btn" href="/outreach">Open Outreach</a></div>
+  {% if error %}<div class="inline-error">{{ error }}</div>{% endif %}
+
+  <form class="pref-row small" hx-post="/applications/{{ a.id }}/prefs" hx-target="#app-outreach-{{ a.id }}" hx-swap="outerHTML" hx-trigger="change">
+    <label class="check-label" title="Email first, then apply within 5 days"><input type="checkbox" name="reach_out_first" {% if prefs.reach_out_first %}checked{% endif %}> Reach out before applying</label>
+    <label class="check-label"><input type="checkbox" name="small_startup" {% if prefs.small_startup %}checked{% endif %}> Small startup</label>
+    <label class="check-label {% if not prefs.small_startup %}is-off{% endif %}" title="Only for small startups: big companies generally can't legally take unpaid interns">
+      <input type="checkbox" name="ok_unpaid" {% if prefs.ok_unpaid %}checked{% endif %} {% if not prefs.small_startup %}disabled{% endif %}> OK to offer unpaid</label>
+  </form>
+  <p class="muted xsmall">{% if prefs.reach_out_first %}Emails go first{% if apply_by %}; <strong class="pop-text">apply by {{ apply_by }}</strong>{% else %}; you'll be reminded to apply within 5 days of the first email{% endif %}.
+    {% else %}Default order: apply first, then emails go out 1-2 days later and mention the role and job #{{ a.job_id }}.{% endif %}
+    These settings apply to every role at {{ company }}.</p>
+
+  {% if picked %}
+  <ul class="picked-list">
+    {% for c in picked %}
+    <li><a href="/outreach?contact={{ c.id }}">{{ c.name or c.email }}</a> <span class="muted small">{{ c.title }}</span>
+      <span class="status-pill out-{{ c.status }}">{{ OUT_LABELS[c.status] }}</span>{% if c.referred %} <span class="flag flag-good">Referred</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if searching %}
+    <p class="small"><span class="spinner"></span> Searching {{ domain }} for people… this takes a few minutes (polite crawl). You can close this panel.</p>
+  {% elif not domain %}
+    <p class="small muted">The Finder hasn't searched {{ company }} yet.</p>
+    <form hx-post="/applications/{{ a.id }}/find-people" hx-target="#app-outreach-{{ a.id }}" hx-swap="outerHTML">
+      <button class="btn btn-sm">{% include "partials/icon_people.svg" %}Find people at {{ company }}</button></form>
+  {% elif not suggestions %}
+    <p class="small muted">No more people to suggest from {{ domain }}{% if not picked %}: the Finder didn't find anyone with a name there{% endif %}.
+      <a href="/finder?company={{ domain }}#company">See everything the Finder found</a></p>
+  {% else %}
+    <p class="small muted">Suggested from {{ domain }}: a recruiter plus people on the matching team. You choose who to contact.</p>
+    <ul class="suggest-list">
+      {% for p in suggestions %}
+      <li>
+        {{ m.avatar(p.name or p.email, "sm") }}
+        <div class="min0">
+          <div><strong>{{ p.name or "Shared inbox" }}</strong> <span class="muted small">{{ p.title }}</span>
+            {% if p.reason == "shared inbox" %}<span class="flag">Shared inbox: no person found</span>{% endif %}</div>
+          <div class="small"><span class="mono-ish">{{ p.email }}</span> · {{ m.dept(p.department) if p.department else "" }}
+            <span class="muted">{{ {"recruiter": "recruiter", "team": "team", "founder": "founder"}.get(p.reason, p.reason) }}</span>
+            {% if p.source_url %}· <a href="{{ p.source_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}</div>
+        </div>
+        {{ m.ring(p.confidence, "sm", "seen in a public source" if p.confidence >= 85 else "pattern guess") }}
+        <form hx-post="/applications/{{ a.id }}/pick" hx-target="#app-outreach-{{ a.id }}" hx-swap="outerHTML">
+          <input type="hidden" name="email" value="{{ p.email }}"><button class="btn btn-sm">Pick</button></form>
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="muted xsmall">Addresses seen in a public source (85+) can be queued. Anything lower needs your OK on the contact first.</p>
+  {% endif %}
+  {% if pasted %}
+  <div class="pasted">
+    <p class="small"><strong>From your paste</strong> <span class="muted">(emails guessed with {{ company }}'s pattern; guesses under 80 need your OK before sending)</span></p>
+    <ul class="suggest-list">
+      {% for p in pasted %}
+      <li>
+        {{ m.avatar(p.name, "sm") }}
+        <div class="min0"><div><strong>{{ p.name }}</strong> <span class="muted small">{{ p.title }}</span></div>
+          <div class="small">{% if p.email %}<span class="mono-ish">{{ p.email }}</span>{% else %}<span class="muted">no email guess: the Finder hasn't searched this company</span>{% endif %}
+            {% if p.department %}· {{ m.dept(p.department) }}{% endif %}</div></div>
+        {% if p.email %}{{ m.ring(p.confidence, "sm", p.why) }}
+        <form hx-post="/applications/{{ a.id }}/add-person" hx-target="#app-outreach-{{ a.id }}" hx-swap="outerHTML">
+          {% for k in ["email", "name", "title", "department", "confidence", "evidence"] %}<input type="hidden" name="{{ k }}" value="{{ p[k] }}">{% endfor %}
+          <button class="btn btn-sm">Pick</button></form>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  <details class="paste-box" {% if a.needs_person %}open{% endif %}>
+    <summary class="small">{% if a.needs_person %}<strong class="pop-text">Needs a person:</strong> {% endif %}Paste people or add an email</summary>
+    <form hx-post="/applications/{{ a.id }}/paste-people" hx-target="#app-outreach-{{ a.id }}" hx-swap="outerHTML">
+      <textarea class="prose-area" name="text" rows="4" placeholder="Paste text copied from {{ company }}'s LinkedIn People page or a search results page. Only this text is read; nothing connects to LinkedIn."></textarea>
+      <button class="btn btn-sm">Find their emails</button>
+    </form>
+    <form class="add-row" hx-post="/applications/{{ a.id }}/add-person" hx-target="#app-outreach-{{ a.id }}" hx-swap="outerHTML">
+      <input name="name" placeholder="Name"><input name="title" placeholder="Title"><input name="email" placeholder="email@company.com" required>
+      <input type="hidden" name="evidence" value="typed"><button class="btn btn-sm">Add</button>
+    </form>
+  </details>
+  {% if everyone %}
+  <details class="everyone">
+    <summary class="small">Everyone else the Finder found at {{ domain }} ({{ everyone | length }})</summary>
+    <ul class="suggest-list">
+      {% for p in everyone %}
+      <li>
+        <div class="min0">
+          <div><strong>{{ p.name or ("Shared inbox" if p.kind == "role" else "Name not found") }}</strong> <span class="muted small">{{ p.title }}</span>
+            {% if p.kind == "role" %}<span class="flag">Shared inbox</span>{% endif %}</div>
+          <div class="small"><span class="mono-ish">{{ p.email }}</span>
+            {% if p.source_url %}· <a href="{{ p.source_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}</div>
+        </div>
+        <form hx-post="/applications/{{ a.id }}/pick" hx-target="#app-outreach-{{ a.id }}" hx-swap="outerHTML">
+          <input type="hidden" name="email" value="{{ p.email }}"><button class="btn btn-sm">Pick</button></form>
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+</div>

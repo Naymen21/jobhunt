@@ -1,0 +1,142 @@
+{% set e = editing %}
+{% set spec = e.spec %}
+<form class="card form-card" hx-post="/jobs/searches{% if e.row %}/{{ e.row.id }}{% endif %}" hx-swap="none">
+  <div class="form-title">
+    <h2>{% if e.row %}Edit “{{ e.row.name }}”{% else %}New saved search{% endif %}</h2>
+    <p class="muted small">Jobs are only hidden when they clearly fail a filter. If a posting doesn't say (no pay listed, work mode not stated), it stays in.</p>
+  </div>
+
+  <div class="form-section">
+    <div class="form-grid">
+      <label class="form-field wide"><span class="field-label">Name</span>
+        <input name="name" value="{{ e.row.name if e.row else '' }}" placeholder="e.g. Game programming internships"></label>
+      <label class="form-field"><span class="field-label">Title has any of</span>
+        <input name="include_keywords" value="{{ spec.include_keywords | join(', ') }}" placeholder="engineer, programmer, developer">
+        <span class="hint">Comma-separated. Empty = any title.</span></label>
+      <label class="form-field"><span class="field-label">…and also has one of</span>
+        <input name="require_keywords" value="{{ spec.require_keywords | join(', ') }}" placeholder="intern, internship, co-op">
+        <span class="hint">Optional second check, e.g. so only internships get through.</span></label>
+      {% set elig = "hs_only" if spec.high_school_only else ("no_degree" if spec.no_degree_only else "any") %}
+      {% set st = student() %}
+      <fieldset class="check-group wide elig-group"><legend>Who can apply <span class="muted small">(judged for: {{ st.label | lower }}{% if st.grad_year %}, class of {{ st.grad_year }}{% endif %}; change it in Settings → Profile)</span></legend>
+        <label class="source-choice wide-choice"><input type="radio" name="eligibility" value="any" {% if elig == "any" %}checked{% endif %}>
+          <span><strong>Any posting</strong>
+            <span class="muted small">Postings you may not qualify for still show, with a yellow tag.</span></span></label>
+        <label class="source-choice wide-choice"><input type="radio" name="eligibility" value="no_degree" {% if elig == "no_degree" %}checked{% endif %}>
+          {% if st.high_school %}
+          <span><strong>No degree requirement</strong>
+            <span class="muted small">Hides postings whose description requires current college enrollment, a degree program,
+              a declared major or a college graduation year. Keeps everything that doesn't say (plus pitch candidates).</span></span></label>
+          {% else %}
+          <span><strong>Only postings I'm eligible for</strong>
+            <span class="muted small">Hides postings that clearly rule you out:
+              {% if st.level in ["college", "community_college"] %}a required master's, PhD or MBA, or a graduation year more than a year from yours
+              {% elif st.level == "grad_school" %}a required PhD, or a graduation year more than a year from yours
+              {% else %}current-enrollment requirements, a required PhD or MBA, or a far-off graduation year{% endif %}.
+              Keeps everything that doesn't say (plus pitch candidates).</span></span></label>
+          {% endif %}
+        {% if st.high_school %}
+        <label class="source-choice wide-choice"><input type="radio" name="eligibility" value="hs_only" {% if elig == "hs_only" %}checked{% endif %}>
+          <span><strong>Only postings open to high school students</strong>
+            <span class="muted small">Keeps jobs that say high school students, rising seniors, pre-college or incoming freshmen can apply
+              (plus pitch candidates). Strictest; often finds very few.</span></span></label>
+        {% endif %}
+      </fieldset>
+      <div class="form-field wide"><span class="field-label">Company size (people)</span>
+        <div class="size-range">
+          <input name="min_employees" inputmode="numeric" value="{{ spec.min_employees or '' }}" placeholder="min, e.g. 10" aria-label="Minimum company size">
+          <span class="muted">to</span>
+          <input name="max_employees" inputmode="numeric" value="{{ spec.max_employees or '' }}" placeholder="max, e.g. 100" aria-label="Maximum company size">
+          <label class="check-label"><input type="checkbox" name="hide_unknown_size" {% if spec.hide_unknown_size %}checked{% endif %}> Hide companies of unknown size</label>
+        </div>
+        <span class="hint">Empty = any size. Sizes come from YC, Built In and company sites; many companies aren't sized yet, so they stay in unless you hide them.</span></div>
+      <label class="form-field"><span class="field-label">Title has none of</span>
+        <input name="exclude_keywords" value="{{ spec.exclude_keywords | join(', ') }}" placeholder="sales, recruiter"></label>
+      <label class="form-field"><span class="field-label">Locations</span>
+        <input name="locations" value="{{ spec.locations | join(', ') }}" placeholder="Los Angeles, Seattle, USA, Remote">
+        <span class="hint">Any of these. "Remote" matches remote jobs anywhere.</span></label>
+      <label class="form-field"><span class="field-label">Minimum pay (per year)</span>
+        <input name="min_pay" inputmode="numeric" value="{{ spec.min_pay or '' }}" placeholder="e.g. 60000">
+        <span class="hint">Hourly pay counts as 2,080 hours a year.</span></label>
+    </div>
+  </div>
+
+  <div class="form-section form-cols">
+    <fieldset class="check-group"><legend>Work mode</legend>
+      {% for key, label in WORK_MODE_LABELS.items() %}
+      <label class="check-label"><input type="checkbox" name="work_modes" value="{{ key }}" {% if key in spec.work_modes %}checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </fieldset>
+    <fieldset class="check-group"><legend>Job type</legend>
+      {% for key, label in JOB_TYPE_LABELS.items() %}
+      <label class="check-label"><input type="checkbox" name="job_types" value="{{ key }}" {% if key in spec.job_types %}checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </fieldset>
+    <label class="form-field"><span class="field-label">Posted within</span>
+      <select name="posted_within_days">
+        {% for days, label in e.posted_choices %}
+        <option value="{{ days or '' }}" {% if spec.posted_within_days == days %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select></label>
+  </div>
+
+  <div class="form-section">
+    <label class="form-field wide"><span class="field-label">Experience to leave out</span>
+      <input name="exclude_experience" value="{{ spec.exclude_experience | join(', ') }}">
+      <span class="hint">Words in the title (senior, staff, lead…), and "N+ years" hides postings that ask for N or more years.
+        Default: {{ e.default_exclude | join(", ") }}.</span></label>
+  </div>
+
+  <div class="form-section">
+    <h3 class="form-sub">Sources</h3>
+    <div class="source-choices">
+      <label class="source-choice">
+        <input type="checkbox" name="sources" value="watchlist" {% if "watchlist" in spec.sources %}checked{% endif %}>
+        <span><strong>Company job boards</strong><span class="muted small">Greenhouse, Lever and Ashby feeds for your watchlist. Free.</span></span>
+      </label>
+      <label class="source-choice">
+        <input type="checkbox" name="sources" value="discover" {% if "discover" in spec.sources %}checked{% endif %}>
+        <span><strong>Discover listings</strong><span class="muted small">Simplify's public internship list and Hacker News
+          "Who is hiring" posts that mention interns. Free; refreshed once a day.</span></span>
+      </label>
+      <label class="source-choice {% if not apify_configured %}is-off{% endif %}">
+        <input type="checkbox" name="sources" value="apify" {% if "apify" in spec.sources %}checked{% endif %}>
+        <span><strong>LinkedIn (Apify)</strong>
+          <span class="muted small">{% if apify_configured %}Public listings, no LinkedIn login. Uses the first title keyword and first location.
+            {% else %}Not configured: add APIFY_TOKEN to .env (see Settings). Selecting it now just reports "not configured".{% endif %}</span></span>
+      </label>
+      <div class="form-grid">
+        <label class="form-field"><span class="field-label">LinkedIn results per run</span>
+          <input name="apify_max_results" type="number" min="1" max="{{ e.max_ceiling }}" value="{{ spec.apify_max_results }}"></label>
+        <label class="form-field wide"><span class="field-label">LinkedIn search text</span>
+          <input name="apify_query" value="{{ spec.apify_query }}" placeholder="{{ spec.apify_keywords() }}">
+          <span class="hint">What to type into LinkedIn's job search. Empty = your first title keyword (+ the first "also has" word).</span></label>
+        <p class="hint wide">LinkedIn runs are limited by a daily budget: (80% of the free monthly credit − this month's
+          usage) ÷ days left. Company boards always run.</p>
+      </div>
+    </div>
+    <details class="more-options" {% if spec.companies %}open{% endif %}>
+      <summary>Which watchlist companies</summary>
+      <div class="scope-row">
+        <label class="check-label"><input type="radio" name="company_scope" value="all" {% if not spec.companies %}checked{% endif %}> All {{ e.feed_companies | length }} with a feed</label>
+        <label class="check-label"><input type="radio" name="company_scope" value="some" {% if spec.companies %}checked{% endif %}> Only these:</label>
+      </div>
+      <div class="company-checks">
+        {% for c in e.feed_companies %}
+        <label class="check-label"><input type="checkbox" name="companies" value="{{ c.id }}" {% if c.id in spec.companies %}checked{% endif %}> {{ c.name }}</label>
+        {% endfor %}
+      </div>
+    </details>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn primary" type="submit">{% if e.row %}Save changes{% else %}Save search{% endif %}</button>
+    <label class="check-label"><input type="checkbox" name="auto_run" {% if not e.row or e.row.auto_run %}checked{% endif %}> Include in the daily run</label>
+    <span class="grow"></span>
+    {% if e.row %}
+    <a class="btn btn-quiet" href="/jobs?search={{ e.row.id }}">Cancel</a>
+    <button class="btn btn-quiet danger" type="button" hx-post="/jobs/searches/{{ e.row.id }}/delete" hx-swap="none"
+            hx-confirm="Delete this saved search? Saved jobs stay saved.">Delete search</button>
+    {% elif cards %}<a class="btn btn-quiet" href="/jobs">Cancel</a>{% endif %}
+  </div>
+</form>

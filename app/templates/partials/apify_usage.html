@@ -1,0 +1,21 @@
+{% if not configured %}
+  <p class="small"><span class="badge badge-unknown">Not configured</span></p>
+  <p class="muted small">Add <code>APIFY_TOKEN</code> to .env to search LinkedIn job listings. Company job boards work without it.</p>
+{% elif error %}
+  <div class="inline-error">{{ error }}</div>
+{% else %}
+  {% set pct = (usage.share * 100) | round(1) %}
+  <div class="usage-line">
+    <span class="stat-num">${{ "%.2f" | format(usage.used_usd) }}</span>
+    <span class="muted small">of ${{ "%.2f" | format(usage.limit_usd) }} {% if usage.limit_reported %}monthly limit{% else %}(free plan, assumed){% endif %}</span>
+  </div>
+  <div class="budget-bar" title="{{ pct }}% used">
+    <div class="budget-fill {% if usage.share >= budget_fraction %}over{% elif usage.share >= budget_fraction * 0.75 %}near{% endif %}" style="width: {{ [pct, 100] | min }}%"></div>
+    <div class="budget-mark" style="left: {{ (budget_fraction * 100) | round | int }}%" title="Runs stop here"></div>
+  </div>
+  <p class="small"><strong>Today's LinkedIn budget:</strong> ${{ "%.2f" | format(daily_budget) }}
+    (${{ "%.2f" | format(spent_today) }} spent, about {{ ((daily_budget - spent_today) / 0.05) | round(0, 'floor') | int if daily_budget > spent_today else 0 }} more 25-result runs)
+    · <strong>Left this month:</strong> ${{ "%.2f" | format(left_month) }} before the 80% line</p>
+  <p class="muted xsmall">Runs stop at the mark ({{ (budget_fraction * 100) | round | int }}%).
+    {% if usage.cycle_end %}Resets {{ usage.cycle_end[:10] }}.{% endif %}</p>
+{% endif %}

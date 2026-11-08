@@ -1,0 +1,123 @@
+{% import "partials/macros.html" as m %}
+<div class="drawer-head">
+  <div class="min0">
+    <div class="muted small">{% if c.mode == "cold" %}<a href="/outreach?view=companies&company={{ c.company_key | urlencode }}">{{ c.company }}</a> · cold pitch, no posting{% else %}{{ c.company }}{% endif %}{% if job %} · <a href="/applications">{{ job.title }}</a> (job #{{ job.id }}){% endif %} · contact #{{ c.id }}</div>
+    <h2 class="drawer-title">{{ c.name or c.email }}</h2>
+    <div class="chip-row">
+      <span class="status-pill out-{{ c.status }}">{{ OUT_LABELS[c.status] }}</span>
+      {% if c.title %}<span class="tag">{{ c.title }}</span>{% endif %}
+      {% if c.department %}{{ m.dept(c.department) }}{% endif %}
+      {% if c.referred %}<span class="flag flag-good">Referred</span>{% endif %}
+      {% if app %}<span class="status-pill st-{{ app.status }}">Application: {{ APP_STATUS_LABELS[app.status] }}</span>{% endif %}
+    </div>
+  </div>
+  <button class="btn btn-quiet drawer-close" type="button" data-close-drawer>Close</button>
+</div>
+{% if error %}<div class="inline-error">{{ error }}</div>{% endif %}
+
+<dl class="facts small">
+  <div><dt>Email</dt><dd><span class="mono-ish">{{ c.email }}</span> · {{ m.ring(c.confidence, "sm") }}
+    {{ "seen in a public source" if c.evidence == "seen" else ("seen, no name next to it" if c.evidence == "seen_no_name" else "pattern guess") }}
+    {% if c.source_url %}· <a href="{{ c.source_url }}" target="_blank" rel="noopener noreferrer">where it was found</a>{% endif %}</dd></div>
+  {% if c.kind == "role" %}<div><dt>Note</dt><dd class="warn-text">Shared inbox, not a person. Only used because no one else was found.</dd></div>{% endif %}
+  {% if c.hook %}<div><dt>Hook</dt><dd>{{ c.hook }} <a href="{{ c.hook_source }}" target="_blank" rel="noopener noreferrer">source</a>
+    <span class="muted">({{ c.hook_level }})</span></dd></div>{% endif %}
+  {% if c.paused_until %}<div><dt>Away</dt><dd>Out of office: follow-ups wait until {{ c.paused_until }}.</dd></div>{% endif %}
+</dl>
+
+{# ---- next step ---- #}
+<div class="next-step">
+  {% if c.status == "picked" %}
+    <div><strong>Waiting for drafts.</strong> <span class="muted small">Run <code>/draft-outreach</code> in Claude Code.</span></div>
+    <form hx-post="/outreach/{{ c.id }}/remove" hx-target="#out-detail"><button class="btn btn-sm btn-quiet">Remove</button></form>
+  {% elif c.status == "draft_ready" %}
+    <div><strong>Review the email and follow-ups below.</strong>
+      <span class="muted small">{% if c.mode == "cold" %}Approving sends it in the next sending window (there's nothing to apply to),{% else %}Approving sends the first email in order (after you apply{% if prefs.reach_out_first %}: this company is set to email first{% endif %}),{% endif %}
+      and both follow-ups only if they don't reply. To rewrite: <code>/redraft-outreach {{ c.id }} your feedback</code></span></div>
+    {% if queue_ok %}
+    <form hx-post="/outreach/{{ c.id }}/approve" hx-target="#out-detail"><button class="btn primary">Approve sequence</button></form>
+    {% else %}
+    <div class="confirm-box"><span class="small warn-text">{{ queue_why }}</span>
+      <form hx-post="/outreach/{{ c.id }}/confirm" hx-target="#out-detail"><button class="btn btn-sm">I've checked this address</button></form></div>
+    {% endif %}
+  {% elif c.status == "approved" %}
+    <div><strong>Approved.</strong> <span class="muted small">
+      {% set first = outbox | selectattr("step", "equalto", "first") | list %}
+      {% if first %}First email queued for {{ first[0].not_before | localtime }}.
+      {% else %}Waits until you mark the application applied, then goes out 1-2 days later.{% endif %}</span></div>
+  {% elif c.status in ["sent", "followup1", "followup2"] %}
+    <div><strong>Waiting for a reply.</strong> <span class="muted small">Any reply stops the follow-ups automatically.</span></div>
+  {% elif c.status == "replied" %}
+    <div><strong>They replied.</strong> <span class="muted small">“{{ c.reply_snippet }}” Answer from Gmail, then update the status.</span></div>
+  {% endif %}
+  {% if c.status in ["sent", "followup1", "followup2", "replied", "call_scheduled", "referred"] %}
+  <div class="row-actions">
+    {% for s, label in [("replied", "Replied"), ("call_scheduled", "Call scheduled"), ("referred", "Referred me")] if c.status != s %}
+    <form hx-post="/outreach/{{ c.id }}/status" hx-target="#out-detail"><input type="hidden" name="status" value="{{ s }}"><button class="btn btn-sm">{{ label }}</button></form>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% if c.status not in ["do_not_contact"] %}
+<div class="drawer-links small">
+  {% if c.status not in ["no_response"] %}
+  <form hx-post="/outreach/{{ c.id }}/status" hx-target="#out-detail"><input type="hidden" name="status" value="no_response"><button class="link-btn">Mark no response</button></form>
+  {% endif %}
+  <form hx-post="/outreach/{{ c.id }}/status" hx-target="#out-detail" hx-confirm="Add {{ c.email }} to your permanent do-not-contact list?">
+    <input type="hidden" name="status" value="do_not_contact"><button class="link-btn danger-link">Do not contact</button></form>
+</div>
+{% endif %}
+
+{% if c.ai_notes %}<div class="notice ai-note"><span class="why-label">Notes from the draft</span> {{ c.ai_notes }}</div>{% endif %}
+
+{% if c.drafts_version %}
+{% set edit_first = c.status in ["picked", "draft_ready", "approved"] %}{% set edit_fu1 = c.status in ["picked", "draft_ready", "approved", "sent"] %}{% set edit_fu2 = edit_fu1 or c.status == "followup1" %}
+<form class="drawer-section out-drafts" hx-post="/outreach/{{ c.id }}/edit" hx-trigger="input changed delay:900ms from:find textarea, input changed delay:900ms from:find input, blur from:find textarea" hx-target="#out-status-{{ c.id }}">
+  <div class="sec-head"><h3>First email</h3><span class="small" id="out-status-{{ c.id }}">{% if c.edited %}<span class="pop-text">Edited by you</span>{% else %}<span class="muted">AI draft, unedited</span>{% endif %}</span></div>
+  <label class="field-label">Subject</label>
+  <input name="subject" value="{{ c.subject }}" {% if not edit_first %}readonly{% endif %}>
+  <textarea class="prose-area" name="body" rows="9" {% if not edit_first %}readonly{% endif %}>{{ c.body }}</textarea>
+  <pre class="sig-preview">{{ signature.strip() }}</pre>
+  <h3>Follow-up 1 <span class="muted small">· 7 days later, same thread, only if no reply</span></h3>
+  <textarea class="prose-area" name="followup1" rows="4" {% if not edit_fu1 %}readonly{% endif %}>{{ c.followup1 }}</textarea>
+  <h3>Follow-up 2 <span class="muted small">· 14 days after that, only if no reply</span></h3>
+  <textarea class="prose-area" name="followup2" rows="3" {% if not edit_fu2 %}readonly{% endif %}>{{ c.followup2 }}</textarea>
+</form>
+
+<section class="drawer-section">
+  <div class="sec-head"><h3>LinkedIn note <span class="muted small">· send it yourself; this tool never touches LinkedIn</span></h3>
+    <button class="btn btn-sm" type="button" data-copy-from="li-note-{{ c.id }}">Copy</button></div>
+  <div class="ans-a li-note" id="li-note-{{ c.id }}">{{ c.linkedin_note }}</div>
+  <span class="muted xsmall">{{ c.linkedin_note | length }} / 200 characters</span>
+</section>
+{% endif %}
+
+{% if c.call_prep %}
+<section class="drawer-section"><div class="sec-head"><h3>Call prep</h3><button class="btn btn-sm" type="button" data-copy-from="prep-{{ c.id }}">Copy</button></div>
+  <div class="job-description" id="prep-{{ c.id }}">{{ c.call_prep }}</div></section>
+{% elif c.status in ["replied", "call_scheduled"] %}
+<p class="muted small">Getting on a call? Run <code>/prep-call {{ c.id }}</code> for a one-page brief.</p>
+{% endif %}
+{% if c.thanks %}
+<section class="drawer-section"><div class="sec-head"><h3>Thank-you note</h3><button class="btn btn-sm" type="button" data-copy-from="thanks-{{ c.id }}">Copy</button></div>
+  <div class="ans-a" id="thanks-{{ c.id }}">{{ c.thanks }}</div>
+  <span class="muted xsmall">Send it from Gmail as a reply in the same thread.</span></section>
+{% elif c.status == "call_scheduled" %}
+<p class="muted small">After the call: <code>/draft-thanks {{ c.id }} what you talked about</code></p>
+{% endif %}
+
+<section class="drawer-section">
+  <h3>Thread</h3>
+  {% if outbox %}
+  <ul class="history-list small">
+    {% for o in outbox %}<li><span class="muted">{{ (o.sent_at or o.not_before) | localtime }}</span>
+      {{ {"first": "First email", "followup1": "Follow-up 1", "followup2": "Follow-up 2"}[o.step] }}:
+      <strong>{{ {"scheduled": "scheduled", "sent": "sent", "cancelled": "cancelled", "failed": "failed"}[o.status] }}</strong>
+      {% if o.error %}<span class="warn-text">({{ o.error }})</span>{% endif %}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  <ul class="history-list small">
+    {% for e in events %}<li><span class="muted">{{ e.at | localtime }}</span> {{ e.kind.replace("_", " ") }}{% if e.detail %}: {{ e.detail }}{% endif %}</li>{% endfor %}
+  </ul>
+  {% if history %}<p class="muted xsmall">{{ history | length }} earlier draft{{ "" if history | length == 1 else "s" }} kept.</p>{% endif %}
+</section>

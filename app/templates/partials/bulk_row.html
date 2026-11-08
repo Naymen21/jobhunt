@@ -1,0 +1,7 @@
+{% set labels = {"valid": "Valid", "invalid": "Invalid", "catch_all": "Catch-all", "unknown": "Unknown"} %}
+<tr class="clickable" hx-get="/finder/history/{{ v.id }}" hx-target="#result" hx-swap="innerHTML show:top">
+  <td class="email-cell">{{ r.email }}</td>
+  <td><span class="badge badge-{{ r.status }}">{{ labels[r.status] }}</span></td>
+  <td><div class="bar bar-sm"><div class="bar-fill status-{{ r.status }}" style="width: {{ r.confidence }}%"></div></div><span class="small">{{ r.confidence }}</span></td>
+  <td class="small muted">{{ r.reason }}</td>
+</tr>

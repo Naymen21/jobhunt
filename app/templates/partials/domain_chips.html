@@ -1,0 +1,9 @@
+{% if known_domains %}
+<div class="chips">
+  <span class="muted small">Recent</span>
+  {% for d, n in known_domains %}
+  <button type="button" class="chip" hx-get="/finder/domains/{{ d.domain }}" hx-target="#domain-search-slot"
+          hx-swap="innerHTML" title="Searched {{ d.last_searched_at | ago }}">{{ d.domain }}<span class="chip-n">{{ n }}</span></button>
+  {% endfor %}
+</div>
+{% endif %}

@@ -1,0 +1,11 @@
+{% set labels = {"valid": "Valid", "invalid": "Invalid", "catch_all": "Catch-all", "unknown": "Unknown"} %}
+{% for v in history %}
+<tr class="clickable" hx-get="/finder/history/{{ v.id }}" hx-target="#result" hx-swap="innerHTML show:top">
+  <td class="email-cell">{{ v.email }}</td>
+  <td><span class="badge badge-{{ v.status }}">{{ labels[v.status] }}</span></td>
+  <td><div class="bar bar-sm"><div class="bar-fill status-{{ v.status }}" style="width: {{ v.confidence }}%"></div></div><span class="small">{{ v.confidence }}</span></td>
+  <td class="small muted nowrap">{{ v.created_at | ago }}</td>
+</tr>
+{% else %}
+<tr><td colspan="4" class="muted center">No verifications yet.</td></tr>
+{% endfor %}

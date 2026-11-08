@@ -1,0 +1,30 @@
+[
+ {
+  "id": "4012345678",
+  "title": "2D Animator",
+  "companyName": "Jam City",
+  "location": "Montevideo, Montevideo Department, Uruguay",
+  "link": "https://www.linkedin.com/jobs/view/4012345678",
+  "applyUrl": "https://jobs.lever.co/jamcity/c9dc208a-6f1b-45af-8b34-e7ffad8c6da9/apply",
+  "postedAt": "2026-09-19",
+  "descriptionText": "Short LinkedIn copy of the Jam City posting.",
+  "workplaceTypes": ["Hybrid"],
+  "employmentType": "Full-time",
+  "salaryInfo": [],
+  "seniorityLevel": "Mid-Senior level"
+ },
+ {
+  "id": "4098765432",
+  "title": "Gameplay Programmer Intern",
+  "companyName": "Indie Forge Studios",
+  "location": "Los Angeles, CA",
+  "link": "https://www.linkedin.com/jobs/view/4098765432",
+  "applyUrl": "https://indieforge.example/careers/gameplay-intern",
+  "postedAt": "2026-11-02T10:00:00.000Z",
+  "descriptionText": "Join us for a summer internship building gameplay systems in Unity and C#.\nYou must be currently enrolled in a bachelor's degree program in Computer Science, graduating in 2027 or 2028.\nCandidates must be 18 years of age or older.\nExperience with Git and debugging is a plus.",
+  "workplaceTypes": ["On-site"],
+  "employmentType": "Internship",
+  "salaryInfo": ["$28.00/hr", "$34.00/hr"],
+  "seniorityLevel": "Internship"
+ }
+]

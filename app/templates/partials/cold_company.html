@@ -1,0 +1,133 @@
+{% import "partials/macros.html" as m %}
+{% set q = "k=" ~ (key | urlencode) %}
+<div {% if searching %}hx-get="/outreach/companies/detail?{{ q }}" hx-trigger="every 5s" hx-target="#out-detail" hx-swap="innerHTML"{% endif %}>
+<div class="drawer-head">
+  <div class="min0">
+    <div class="muted small">Cold pitch · {{ SOURCE_LABELS.get(co.source, co.source) }}</div>
+    <h2 class="drawer-title">{{ co.name }}</h2>
+    <div class="chip-row">
+      {% if co.employees %}<span class="size-tag">~{{ co.employees }} people</span>{% else %}<span class="tag">Size unknown</span>{% endif %}
+      {% if co.local %}<span class="local-tag">Local</span>{% endif %}
+      {% if co.cold_status == "dismissed" %}<span class="tag">Hidden</span>{% endif %}
+    </div>
+  </div>
+  <button class="btn btn-quiet drawer-close" type="button" data-close-drawer>Close</button>
+</div>
+{% if error %}<div class="inline-error">{{ error }}</div>{% endif %}
+{% if notice %}<div class="notice">{{ notice }}</div>{% endif %}
+
+<dl class="facts small">
+  {% if co.one_liner %}<div><dt>What they do</dt><dd>{{ co.one_liner }}</dd></div>{% endif %}
+  {% if co.about %}<div><dt>About</dt><dd>{{ co.about }}</dd></div>{% endif %}
+  {% if co.industry %}<div><dt>Industry</dt><dd>{{ co.industry }}</dd></div>{% endif %}
+  <div><dt>Location</dt><dd>{{ co.location or "Not listed" }}</dd></div>
+  <div><dt>Size</dt><dd>{% if co.employees %}~{{ co.employees }} people · {{ co.employees_source }}{% if co.employees_at %}, {{ co.employees_at[:10] }}{% endif %}
+    {% if co.employees_url %}· <a href="{{ co.employees_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}
+    {% else %}Not known yet: checked on the next autopilot run{% endif %}</dd></div>
+  {% if co.website or co.domain %}<div><dt>Website</dt><dd><a href="{{ co.website if co.website.startswith('http') else 'https://' ~ (co.website or co.domain) }}" target="_blank" rel="noopener noreferrer">{{ (co.website or co.domain).replace("https://", "").replace("http://", "") }}</a></dd></div>{% endif %}
+  {% if co.source_url %}<div><dt>Found on</dt><dd><a href="{{ co.source_url }}" target="_blank" rel="noopener noreferrer">{{ SOURCE_LABELS.get(co.source, co.source) }} page</a></dd></div>{% endif %}
+</dl>
+
+{% if other %}
+<p class="small notice">You're already in touch with {{ other | map(attribute="name") | select | join(", ") or "someone" }} here through an application.
+  A second cold email to the same company is usually too much.</p>
+{% endif %}
+
+<div class="sec-head"><h3>Who to pitch</h3></div>
+{% if picked %}
+<ul class="picked-list">
+  {% for c in picked %}
+  <li><a href="/outreach?contact={{ c.id }}">{{ c.name or c.email }}</a> <span class="muted small">{{ c.title }}</span>
+    <span class="status-pill out-{{ c.status }}">{{ OUT_LABELS[c.status] }}</span></li>
+  {% endfor %}
+</ul>
+<p class="muted xsmall">Next: run <code>/draft-outreach</code> in Claude Code (or let the autopilot), then review and approve on the People tab
+  or the Review page. Cold pitches send in the next sending window after you approve.</p>
+{% endif %}
+
+{% if searching %}
+  <p class="small"><span class="spinner"></span> Searching {{ domain }} for people… a few minutes (polite crawl). You can close this panel.</p>
+{% elif not domain or not (suggestions or everyone) %}
+  <p class="small muted">{% if domain %}The Finder hasn't found anyone at {{ domain }} yet.{% else %}No website known for {{ co.name }} yet.{% endif %}</p>
+  <form hx-post="/outreach/companies/find-people?{{ q }}" hx-target="#out-detail" hx-swap="innerHTML">
+    <button class="btn btn-sm">{% include "partials/icon_people.svg" %}Find people at {{ co.name }}</button></form>
+{% else %}
+  {% if suggestions %}
+  <p class="small muted">Founders and engineering leads first: at a company this size they decide on interns. You choose.</p>
+  <ul class="suggest-list">
+    {% for p in suggestions %}
+    <li>
+      {{ m.avatar(p.name or p.email, "sm") }}
+      <div class="min0">
+        <div><strong>{{ p.name or "Shared inbox" }}</strong> <span class="muted small">{{ p.title }}</span>
+          {% if p.reason == "shared inbox" %}<span class="flag">Shared inbox: no person found</span>{% endif %}</div>
+        <div class="small"><span class="mono-ish">{{ p.email }}</span> · <span class="muted">{{ p.reason }}</span>
+          {% if p.source_url %}· <a href="{{ p.source_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}</div>
+      </div>
+      {{ m.ring(p.confidence, "sm", "seen in a public source" if p.confidence >= 85 else "pattern guess") }}
+      <form hx-post="/outreach/companies/pick?{{ q }}" hx-target="#out-detail" hx-swap="innerHTML">
+        <input type="hidden" name="email" value="{{ p.email }}"><button class="btn btn-sm">Pick</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted xsmall">Addresses seen in a public source (85+) can be queued. Anything lower needs your OK on the contact first.</p>
+  {% endif %}
+{% endif %}
+
+{% if pasted %}
+<div class="pasted">
+  <p class="small"><strong>From your paste</strong> <span class="muted">(emails guessed with {{ co.name }}'s pattern; guesses under 80 need your OK before sending)</span></p>
+  <ul class="suggest-list">
+    {% for p in pasted %}
+    <li>
+      {{ m.avatar(p.name, "sm") }}
+      <div class="min0"><div><strong>{{ p.name }}</strong> <span class="muted small">{{ p.title }}</span></div>
+        <div class="small">{% if p.email %}<span class="mono-ish">{{ p.email }}</span>{% else %}<span class="muted">no email guess: the Finder hasn't searched this company</span>{% endif %}</div></div>
+      {% if p.email %}{{ m.ring(p.confidence, "sm", p.why) }}
+      <form hx-post="/outreach/companies/pick?{{ q }}" hx-target="#out-detail" hx-swap="innerHTML">
+        {% for k in ["email", "name", "title", "department", "confidence", "evidence"] %}<input type="hidden" name="{{ k }}" value="{{ p[k] }}">{% endfor %}
+        <button class="btn btn-sm">Pick</button></form>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<details class="paste-box">
+  <summary class="small">Paste people or add an email</summary>
+  <form hx-post="/outreach/companies/paste?{{ q }}" hx-target="#out-detail" hx-swap="innerHTML">
+    <textarea class="prose-area" name="text" rows="4" placeholder="Paste text copied from {{ co.name }}'s LinkedIn People page or team page. Only this text is read; nothing connects to LinkedIn."></textarea>
+    <button class="btn btn-sm">Find their emails</button>
+  </form>
+  <form class="add-row" hx-post="/outreach/companies/pick?{{ q }}" hx-target="#out-detail" hx-swap="innerHTML">
+    <input name="name" placeholder="Name"><input name="title" placeholder="Title"><input name="email" placeholder="email@company.com" required>
+    <input type="hidden" name="evidence" value="typed"><button class="btn btn-sm">Add</button>
+  </form>
+</details>
+
+{% if everyone %}
+<details class="everyone">
+  <summary class="small">Everyone else the Finder found at {{ domain }} ({{ everyone | length }})</summary>
+  <ul class="suggest-list">
+    {% for p in everyone %}
+    <li>
+      <div class="min0">
+        <div><strong>{{ p.name or ("Shared inbox" if p.kind == "role" else "Name not found") }}</strong> <span class="muted small">{{ p.title }}</span></div>
+        <div class="small"><span class="mono-ish">{{ p.email }}</span>{% if p.source_url %} · <a href="{{ p.source_url }}" target="_blank" rel="noopener noreferrer">source</a>{% endif %}</div>
+      </div>
+      <form hx-post="/outreach/companies/pick?{{ q }}" hx-target="#out-detail" hx-swap="innerHTML">
+        <input type="hidden" name="email" value="{{ p.email }}"><button class="btn btn-sm">Pick</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+
+<div class="row-actions drawer-foot">
+  {% if co.cold_status == "dismissed" %}
+  <form hx-post="/outreach/companies/restore?{{ q }}" hx-target="#out-detail" hx-swap="innerHTML"><button class="btn btn-sm">Show it again</button></form>
+  {% else %}
+  <form hx-post="/outreach/companies/dismiss?{{ q }}" hx-target="#out-detail" hx-swap="innerHTML"><button class="btn btn-sm btn-quiet">Not interested</button></form>
+  {% endif %}
+</div>
+</div>

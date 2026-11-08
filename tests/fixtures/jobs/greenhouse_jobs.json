@@ -1,0 +1,394 @@
+{
+ "jobs": [
+  {
+   "absolute_url": "https://www.riotgames.com/en/work-with-us/job/8250894?gh_jid=8250894",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 3569664,
+   "location": {
+    "name": "Los Angeles, USA; Mercer Island, USA; Redwood City, USA"
+   },
+   "metadata": [
+    {
+     "id": 146707,
+     "name": "Public Products",
+     "value": [
+      "Riot Operations & Support"
+     ],
+     "value_type": "multi_select"
+    },
+    {
+     "id": 1313593,
+     "name": "Relocation Package",
+     "value": "Gold",
+     "value_type": "single_select"
+    },
+    {
+     "id": 406430,
+     "name": "Visa Eligible",
+     "value": true,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 1027080,
+     "name": "Job Family Group",
+     "value": "Information Security Group",
+     "value_type": "single_select"
+    },
+    {
+     "id": 4666668,
+     "name": "Craft",
+     "value": "Information Security Group",
+     "value_type": "single_select"
+    },
+    {
+     "id": 406429,
+     "name": "Relocation Eligible?",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 10191235,
+     "name": "Additional Location",
+     "value": [
+      "Mercer Island, USA",
+      "SF Bay Area, USA"
+     ],
+     "value_type": "multi_select"
+    },
+    {
+     "id": 14065687,
+     "name": "Location Range 1",
+     "value": "(Los Angeles Only) Base salary range between $229,200.00 - $319,500.00 USD + incentive compensation + equity + 401K with company match + medical, dental, vision, and life insurance + short and long-term disability + open PTO.",
+     "value_type": "short_text"
+    },
+    {
+     "id": 14065688,
+     "name": "Location Range 2",
+     "value": "(Mercer Island only) Base salary range between $229,200.00 - $319,500.00 USD + incentive compensation + equity + 401K with company match + medical, dental, vision, and life insurance + short and long-term disability + open PTO.",
+     "value_type": "short_text"
+    },
+    {
+     "id": 14065689,
+     "name": "Location Range 3",
+     "value": "(Redwood City only) Base salary range between $246,300.00 - $343,400.00 USD + incentive compensation + equity + 401K with company match + medical, dental, vision, and life insurance + short and long-term disability + open PTO.",
+     "value_type": "short_text"
+    },
+    {
+     "id": 15044762,
+     "name": "Location Range 4",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 24485204,
+     "name": "Location Range - International",
+     "value": null,
+     "value_type": "long_text"
+    },
+    {
+     "id": 14845257,
+     "name": "EEO Field",
+     "value": null,
+     "value_type": "long_text"
+    }
+   ],
+   "id": 8250894,
+   "updated_at": "2026-10-30T14:32:05-04:00",
+   "requisition_id": "REQ-0010374",
+   "title": " Manager, Anti-Cheat Engineering (Embedded Vanguard) - Central Technology, Anti-Cheat",
+   "company_name": "Riot Games",
+   "first_published": "2026-10-09T16:54:09-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;p&gt;Riot\u2019s Anti-Cheat team is versatile and passionate about our craft. We understand the player impact of cheating in games and are focused on setting the highest bar for the integrity of multiplayer games. We relish the opportunity to work with new tech stacks and bring security to all of Riot&#39;s games; each with its own security risk profile and complex challenges. At the most fundamental level, our goal is to promote the best player experience by protecting the legitimacy of their favorite games.&lt;/p&gt;\n&lt;p&gt;As an &lt;strong&gt;Anti-Cheat Engineering Manager &lt;/strong&gt;for Mobile Vanguard,&amp;nbsp; you will lead the team responsible for the ongoing development and evolution of Vanguard Anti-Cheat\u2019s services on mobile. You\u2019ll help set direction, shape priorities, and ensure the team delivers secure, reliable capabilities across Vanguard\u2019s mobile suite in a timely manner. While your primary focus will be enabling the team and driving outcomes, your strong fluency in mobile security and cheat techniques will allow you to guide architecture, challenge technical decisions, and step directly into complex debugging or investigations when needed. You\u2019ll help the team anticipate and analyze emerging cheat techniques, then translate those findings into effective detections, mitigations, and preventative controls. You will report to the Senior Engineering Manager of the Anti-Cheat&amp;nbsp; team.&lt;/p&gt;\n&lt;h2&gt;Responsibilities:&amp;nbsp;&lt;/h2&gt;\n&lt;ul&gt;\n&lt;li&gt;Manage, identify, recruit, interview, and hire engineers to help the team scale effectively&lt;/li&gt;\n&lt;li&gt;Set direction and drive high-impact anti-cheat capabilities from ambiguity through production to prevent cheating in mobile and console environments&lt;/li&gt;\n&lt;li&gt;Lead the team in rapidly translating emerging threats into resilient detections and preventative countermeasures that can be safely deployed at scale&lt;/li&gt;\n&lt;li&gt;Balance immediate threat response with proactive technical investments that anticipate adversaries\u2019 next moves or eliminate common abuse vectors entirely&lt;/li&gt;\n&lt;li&gt;Partner with game teams across genres to understand their specific security needs and help shape the security landscape&lt;/li&gt;\n&lt;li&gt;Promote secure coding standards and design that reduce vectors for cheating&lt;/li&gt;\n&lt;li&gt;Keep up-to-date with the state of cheats and cheating techniques across mobile titles&lt;/li&gt;\n&lt;li&gt;Support game teams directly in understanding cheating ecosystems and integrating Anti-Cheat&lt;/li&gt;\n&lt;/ul&gt;\n&lt;h2&gt;Required Qualifications:&amp;nbsp;&lt;/h2&gt;\n&lt;ul&gt;\n&lt;li&gt;Minimum 4+ years of industry experience&lt;/li&gt;\n&lt;li&gt;Familiarity or experience with Android and/or iOS platform security models&lt;/li&gt;\n&lt;li&gt;Deep technical understanding of mobile platforms (Android/iOS)&lt;/li&gt;\n&lt;li&gt;Experience building and deploying mobile native (C/C++) SDKs and/or frameworks&lt;/li&gt;\n&lt;/ul&gt;\n&lt;h2&gt;Desired Qualifications:&lt;/h2&gt;\n&lt;ul&gt;\n&lt;li&gt;Experience with Android and/or iOS build tools (Android SDK/NDK, Xcode, LLVM)&lt;/li&gt;\n&lt;li&gt;Familiarity with Android &amp;amp; iOS executable formats, reverse engineering, or binary exploitation&lt;/li&gt;\n&lt;li&gt;Experience with mobile reverse engineering tools (Frida, IDA Pro, Radare2, etc)&lt;/li&gt;\n&lt;li&gt;Experience with Gen9 Console (Xbox Series XS and/or PS5) development a plus&lt;/li&gt;\n&lt;li&gt;Experience with macOS platform and security features a plus&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;em&gt;For this role, you&#39;ll find success through craft expertise, a collaborative spirit, and choices that focus on your fellow Rioters, who are the customers of your work. Being a dedicated fan of games is not necessary for this position!&lt;/em&gt;&lt;/p&gt;\n&lt;h2&gt;&lt;strong&gt;Our Perks:&lt;/strong&gt;&lt;/h2&gt;\n&lt;p&gt;Riot focuses on work/life balance, shown by our open paid time off policy and other perks such as flexible work schedules. We offer medical, dental, and life insurance, parental leave for you, your spouse/domestic partner, and children, and a 401k with company match. Check out our &lt;a href=&quot;https://www.riotgames.com/en/work-with-us/overview&quot;&gt;&lt;strong&gt;benefits pages&lt;/strong&gt;&lt;/a&gt; for more information.&lt;/p&gt;\n&lt;p&gt;At Riot Games, we&amp;nbsp;&lt;a class=&quot;c-link&quot; href=&quot;https://www.riotgames.com/en/who-we-are/values&quot; target=&quot;_blank&quot; data-stringify-link=&quot;https://www.riotgames.com/en/who-we-are/values&quot; data-sk=&quot;tooltip_parent&quot;&gt;put players first&lt;/a&gt;. That mission drives every decision in our quest to create games and experiences that make it better to be a player. Whether you\u2019re working directly on a new player-facing experience or you\u2019re supporting the company as a whole, everyone at Riot is part of our mission. And just like in our games, we\u2019re better when we work together. Our goal is to create collaborative teams where you are empowered to bring your unique perspective everyday. If that sounds like the kind of place you want to work, we\u2019re looking forward to your application.&lt;/p&gt;\n&lt;p&gt;&amp;nbsp;&lt;/p&gt;\n&lt;p&gt;&lt;em&gt;It\u2019s our policy to provide equal employment opportunity for all applicants and members of Riot Games, Inc. Riot Games makes reasonable accommodations for handicapped and disabled Rioters and does not unlawfully discriminate on the basis of race, color, religion, sex, sexual orientation, gender identity or expression, national origin, age, handicap, veteran status, marital status, criminal history, or any other category protected by applicable federal and state law. We consider for employment all qualified applicants, including those with criminal histories, in a manner consistent with applicable federal, state and local law, including the California Fair Chance Act, the City of Los Angeles Fair Chance Initiative for Hiring Ordinance, the Los Angeles County Fair Chance Ordinance for Employers, the San&amp;nbsp;Francisco Fair Chance Ordinance, and the Washington Fair Chance Act.&lt;/em&gt;&lt;/p&gt;\n&lt;p&gt;&lt;em&gt;Per the Los Angeles County Fair Chance Ordinance, the following core duties may create a basis for disqualifying candidates with relevant criminal histories:&lt;/em&gt;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;&lt;em&gt;Safeguarding confidential and sensitive Company data &lt;/em&gt;&lt;/li&gt;\n&lt;li&gt;&lt;em&gt;Communication with others, including Rioters and third parties such as vendors, and/or players, including minors&lt;/em&gt;&lt;/li&gt;\n&lt;li&gt;&lt;em&gt;Accessing Company assets, secure digital systems, and networks&lt;/em&gt;&lt;/li&gt;\n&lt;li&gt;&lt;em&gt;Ensuring a safe interactive environment for players and other Rioters&lt;/em&gt;&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;em&gt;These duties are directly related to essential operations, safety, trust, and compliance obligations within our organization. Please note that job duties may evolve based on business needs and additional responsibilities may be assigned as necessary to maintain operational efficiency and security.&amp;nbsp;&lt;/em&gt;&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;(Redwood City Only)&lt;/strong&gt; Base salary range between $246,300.00 - $343,400.00 USD + incentive compensation + equity + 401K with company match + medical, dental, vision, and life insurance + short and long-term disability + open PTO.&lt;/p&gt;",
+   "departments": [
+    {
+     "id": 350912,
+     "name": "Riot Technology",
+     "child_ids": [],
+     "parent_id": 89020
+    }
+   ],
+   "offices": [
+    {
+     "id": 884,
+     "name": "Los Angeles, USA",
+     "location": "Los Angeles, California, United States",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  },
+  {
+   "absolute_url": "https://www.riotgames.com/en/work-with-us/job/8279690?gh_jid=8279690",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 3581353,
+   "location": {
+    "name": "Shanghai, China"
+   },
+   "metadata": [
+    {
+     "id": 146707,
+     "name": "Public Products",
+     "value": [
+      "Riot Game Operations"
+     ],
+     "value_type": "multi_select"
+    },
+    {
+     "id": 1313593,
+     "name": "Relocation Package",
+     "value": "No Relocation",
+     "value_type": "single_select"
+    },
+    {
+     "id": 406430,
+     "name": "Visa Eligible",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 1027080,
+     "name": "Job Family Group",
+     "value": "Art",
+     "value_type": "single_select"
+    },
+    {
+     "id": 4666668,
+     "name": "Craft",
+     "value": "Art",
+     "value_type": "single_select"
+    },
+    {
+     "id": 406429,
+     "name": "Relocation Eligible?",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 10191235,
+     "name": "Additional Location",
+     "value": null,
+     "value_type": "multi_select"
+    },
+    {
+     "id": 14065687,
+     "name": "Location Range 1",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 14065688,
+     "name": "Location Range 2",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 14065689,
+     "name": "Location Range 3",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 15044762,
+     "name": "Location Range 4",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 24485204,
+     "name": "Location Range - International",
+     "value": "(Shanghai Only) Base salary range between \u00a5492,500.00 - \u00a5763,300.00 CNY",
+     "value_type": "long_text"
+    },
+    {
+     "id": 14845257,
+     "name": "EEO Field",
+     "value": null,
+     "value_type": "long_text"
+    }
+   ],
+   "id": 8279690,
+   "updated_at": "2026-10-30T09:01:52-04:00",
+   "requisition_id": "REQ-0010407",
+   "title": "3D Character Artist - Unpublished R&D Product",
+   "company_name": "Riot Games",
+   "first_published": "2026-10-14T20:51:42-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;p&gt;Riot Games was established in 2006 by entrepreneurial gamers who believe that player-focused game development can result in great games. In 2009, Riot released its debut title League of Legends to critical and player acclaim. As the most played video game in the world, over 100 million play every month. Players form the foundation of our community and it\u2019s for them that we continue to evolve and improve the League of Legends experience.&lt;/p&gt;\n&lt;p&gt;We\u2019re looking for humble but ambitious, razor-sharp professionals who can teach us a thing or two. We promise to return the favor. Like us, you take play seriously; you\u2019re passionate about games. We embrace those who see things differently, aren\u2019t afraid to experiment, and who have a healthy disregard for constraints.&lt;/p&gt;\n&lt;p&gt;That&#39;s where you come in.&lt;/p&gt;\n&lt;p&gt;As a &lt;strong&gt;Character Artist&lt;/strong&gt; at Riot, you will bring champions to life by creating and texturing high and low poly models. You will help craft some of the most iconic characters in the world of gaming. Your sculpting skills, artistic eye and keen understanding of anatomy, form, and color will lead the way in character creation. Working within both technical and design constraints, you will use your knowledge of proportions, anatomy and readability to ensure models are optimized in game. Your craft expertise, high-level execution and attention to detail will enrich the player\u2019s immersive experience.&lt;/p&gt;\n&lt;p&gt;As a &lt;strong&gt;3D Character Artist&lt;/strong&gt; on the Unpublished R&amp;amp;D Product, you will translate character concepts into game-ready assets that meet technical and design requirements. You will contribute throughout the character production process, from concept to final implementation, and collaborate with multiple disciplines and external partners to deliver consistently high-quality character assets. You will create appealing, distinctive, and readable characters that help deliver a high-quality player experience. You will report into the Art Director of the team.&lt;/p&gt;\n&lt;h2&gt;Responsibilities:&lt;/h2&gt;\n&lt;ul&gt;\n&lt;li&gt;Use your knowledge of stylized character art to create high-quality 3D character models.&lt;/li&gt;\n&lt;li&gt;Interpret and execute character concepts while considering technical and design constraints such as polygon counts, texture memory, and topology.&lt;/li&gt;\n&lt;li&gt;Understand the complete asset creation process, from concept design, modeling, baking, and texturing through successful integration into the game.&lt;/li&gt;\n&lt;li&gt;Review and provide guidance on character content created by external partners, helping maintain stylistic consistency, quality standards, and project budgets.&lt;/li&gt;\n&lt;li&gt;Collaborate with other teams and disciplines to plan and drive the production and delivery of character assets.&lt;/li&gt;\n&lt;li&gt;Help mature character asset pipelines and establish best practices for high-quality and efficient asset creation.&lt;/li&gt;\n&lt;li&gt;Maintain a strong focus on in-game performance, readability, and long-term maintainability while meeting the visual quality bar.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;h2&gt;Required Qualifications:&lt;/h2&gt;\n&lt;ul&gt;\n&lt;li&gt;5+ years of professional character modeling experience.&lt;/li&gt;\n&lt;li&gt;Experience with stylized rendering or cel-shaded rendering.&lt;/li&gt;\n&lt;li&gt;Experience shipping game content.&lt;/li&gt;\n&lt;li&gt;Professional experience with modeling, sculpting, baking, and texturing tools such as Maya, ZBrush, Substance, and Photoshop.&lt;/li&gt;\n&lt;li&gt;Strong understanding of stylized shape language, with the ability to represent a wide range of character looks through an economy of form and detail.&lt;/li&gt;\n&lt;li&gt;Understanding of technical constraints, performance requirements, and in-game integration workflows for character assets.&lt;/li&gt;\n&lt;li&gt;Strong cross-functional communication and collaboration skills, with the ability to work effectively with Design, Technical Art, Engineering, and external partners.&lt;/li&gt;\n&lt;li&gt;Strong ownership and problem-solving skills, with the ability to move work forward consistently within clear goals and complex constraints.&lt;/li&gt;\n&lt;li&gt;Proficiency in Mandarin Chinese&lt;/li&gt;\n&lt;/ul&gt;\n&lt;h2&gt;Desired Qualifications:&lt;/h2&gt;\n&lt;ul&gt;\n&lt;li&gt;Experience working closely with Technical Art.&lt;/li&gt;\n&lt;li&gt;Experience using Unreal Engine.&lt;/li&gt;\n&lt;li&gt;A broad 3D skill set including polygon modeling, sculpting, basic rigging and animation, painting, and presentation.&lt;/li&gt;\n&lt;li&gt;Experience on games or projects centered on character experiences.&lt;/li&gt;\n&lt;li&gt;Experience managing external partners, reviewing character assets, or collaborating on outsourcing workflows.&lt;/li&gt;\n&lt;li&gt;Familiarity with character asset optimization, material creation, or real-time rendering workflows.&lt;/li&gt;\n&lt;li&gt;Proficiency in English.&lt;/li&gt;\n&lt;/ul&gt;\n&lt;h2&gt;Application Materials:&lt;/h2&gt;\n&lt;p&gt;Please provide a portfolio highlighting high-quality 3D character work, stylized characters, character modeling, sculpting, texturing, and final in-game results. Whenever possible, please clarify your responsibilities, tools, technical constraints, and individual contributions to each project.&lt;/p&gt;\n&lt;p&gt;&lt;em&gt;For this role, you&#39;ll find success through craft expertise, a collaborative spirit, and decision-making that prioritizes the delight of players. We will be looking at your past studies, experience, and your personal relationship with games. If you embody player empathy and care about players&#39; experiences, this could be your role!&lt;/em&gt;&lt;/p&gt;",
+   "departments": [
+    {
+     "id": 215530,
+     "name": "CN Game Studio",
+     "child_ids": [],
+     "parent_id": 89020
+    }
+   ],
+   "offices": [
+    {
+     "id": 5044,
+     "name": "Shanghai, China",
+     "location": "Shanghai, China",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  },
+  {
+   "absolute_url": "https://www.riotgames.com/en/work-with-us/job/7271195?gh_jid=7271195",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 3254799,
+   "location": {
+    "name": "Guangzhou, China"
+   },
+   "metadata": [
+    {
+     "id": 146707,
+     "name": "Public Products",
+     "value": [
+      "Riot Discovery"
+     ],
+     "value_type": "multi_select"
+    },
+    {
+     "id": 1313593,
+     "name": "Relocation Package",
+     "value": null,
+     "value_type": "single_select"
+    },
+    {
+     "id": 406430,
+     "name": "Visa Eligible",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 1027080,
+     "name": "Job Family Group",
+     "value": "Art",
+     "value_type": "single_select"
+    },
+    {
+     "id": 4666668,
+     "name": "Craft",
+     "value": "Art",
+     "value_type": "single_select"
+    },
+    {
+     "id": 406429,
+     "name": "Relocation Eligible?",
+     "value": null,
+     "value_type": "yes_no"
+    },
+    {
+     "id": 10191235,
+     "name": "Additional Location",
+     "value": [],
+     "value_type": "multi_select"
+    },
+    {
+     "id": 14065687,
+     "name": "Location Range 1",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 14065688,
+     "name": "Location Range 2",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 14065689,
+     "name": "Location Range 3",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 15044762,
+     "name": "Location Range 4",
+     "value": null,
+     "value_type": "short_text"
+    },
+    {
+     "id": 24485204,
+     "name": "Location Range - International",
+     "value": null,
+     "value_type": "long_text"
+    },
+    {
+     "id": 14845257,
+     "name": "EEO Field",
+     "value": null,
+     "value_type": "long_text"
+    }
+   ],
+   "id": 7271195,
+   "updated_at": "2026-10-23T04:50:44-04:00",
+   "requisition_id": "5947",
+   "title": "3D Environment Artist - Unpublished R&D Product (Contract)",
+   "company_name": "Riot Games",
+   "first_published": "2026-10-15T05:26:16-04:00",
+   "language": "zh",
+   "application_deadline": null,
+   "content": "&lt;p&gt;&lt;strong&gt;\u5173\u4e8e\u6211\u4eec&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;&amp;nbsp;&lt;/p&gt;\n&lt;p&gt;\u6211\u4eec\u4ee5\u73a9\u5bb6\u4f53\u9a8c\u4e3a\u6838\u5fc3\uff0c\u7528\u9ad8\u54c1\u8d28\u7684\u573a\u666f\u521b\u4f5c\u4e3a\u5168\u7403\u73a9\u5bb6\u5e26\u6765\u6c89\u6d78\u5f0f\u4f53\u9a8c\u3002\u4f60\u5c06\u4e0e\u7f8e\u672f\u3001\u7b56\u5212\u3001\u7a0b\u5e8f\u7b49\u591a\u56e2\u961f\u7d27\u5bc6\u534f\u4f5c\u3002\u6211\u4eec\u9f13\u52b1\u5927\u80c6\u521b\u60f3\u548c\u6301\u7eed\u5b66\u4e60\uff0c\u671f\u5f85\u5bcc\u6709\u70ed\u60c5\u7684\u4f60\u52a0\u5165\uff01&lt;/p&gt;\n&lt;p&gt;&lt;br&gt;&lt;br&gt;&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;\u5c97\u4f4d\u804c\u8d23&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;&amp;nbsp;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;\u8d1f\u8d23\u6e38\u620f\u5185\u73af\u5883\u4e0e\u573a\u666f\u7684\u5730\u7f16\u7f8e\u672f\u5de5\u4f5c\uff0c\u6839\u636e\u7b56\u5212\u53ca\u89c6\u89c9\u9700\u6c42\u8fdb\u884c\u642d\u5efa\uff1b&lt;/li&gt;\n&lt;li&gt;\u4f18\u5316\u573a\u666f\u8d44\u6e90\uff0c\u63d0\u5347\u6027\u80fd\u5e76\u4fdd\u8bc1\u7f8e\u672f\u54c1\u8d28\uff0c\u534f\u52a9\u5b8c\u6210\u90e8\u5206\u5de5\u5177\u7684\u7b80\u5355\u5236\u4f5c\u6216\u6d41\u7a0b\u4f18\u5316\uff1b&lt;/li&gt;\n&lt;li&gt;\u4e0e\u7b56\u5212\u3001\u7f8e\u672f\u3001\u7a0b\u5e8f\u7b49\u591a\u5c97\u4f4d\u534f\u4f5c\uff0c\u4fdd\u969c\u573a\u666f\u76f8\u5173\u9700\u6c42\u9ad8\u6548\u843d\u5730\u548c\u5b8c\u6574\u5448\u73b0\uff1b&lt;/li&gt;\n&lt;li&gt;\u5173\u6ce8\u6e38\u620f\u4f53\u9a8c\u4e0e\u7f8e\u672f\u6548\u679c\uff0c\u6839\u636e\u6d4b\u8bd5\u4e0e\u53cd\u9988\u6301\u7eed\u4f18\u5316\u573a\u666f\u8868\u73b0\uff1b&lt;/li&gt;\n&lt;li&gt;\u8ddf\u8e2a\u884c\u4e1a\u7f8e\u672f\u53d1\u5c55\u8d8b\u52bf\uff0c\u79ef\u6781\u603b\u7ed3\u548c\u6c89\u6dc0\u4f18\u79c0\u7684\u5730\u7f16\u65b9\u6cd5\u4e0e\u6d41\u7a0b\u3002&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;br&gt;&lt;br&gt;&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;\u4efb\u804c\u8981\u6c42&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;&amp;nbsp;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;\u672c\u79d1\u53ca\u4ee5\u4e0a\u5b66\u5386\uff0c2\u5e74\u4ee5\u4e0a\u6e38\u620f\u9879\u76ee\u73af\u5883\u7f8e\u672f/\u573a\u666f\u5730\u7f16\u76f8\u5173\u5de5\u4f5c\u7ecf\u9a8c\uff1b&lt;/li&gt;\n&lt;li&gt;\u62e5\u6709\u81f3\u5c11\u534a\u5e74\u4ee5\u4e0aUnreal Engine 5\uff08UE5\uff09\u9879\u76ee\u573a\u666f\u642d\u5efa\u53ca\u8d44\u6e90\u6574\u5408\u7ecf\u9a8c\uff0c\u80fd\u72ec\u7acb\u5b8c\u6210\u573a\u666f\u5e03\u5c40\u548c\u6c1b\u56f4\u8425\u9020\uff1b&lt;/li&gt;\n&lt;li&gt;\u7cbe\u901a\u5e38\u75283D\u5efa\u6a21/\u8d34\u56fe\u5de5\u5177\uff08\u59823ds Max\u3001Maya\u3001Blender\u3001Substance\u7b49\uff09\uff0c\u5177\u5907\u7f8e\u672f\u57fa\u7840\u548c\u7a7a\u95f4\u6784\u6210\u80fd\u529b\uff1b&lt;/li&gt;\n&lt;li&gt;\u719f\u6089\u4e3b\u6d41\u5f15\u64ce\uff08\u5982Unity\u7b49\uff09\u73af\u5883\u642d\u5efa\u53ca\u8d44\u6e90\u6574\u5408\u6d41\u7a0b\u8005\u4f18\u5148\uff1b&lt;/li&gt;\n&lt;li&gt;\u6709\u6027\u80fd\u4f18\u5316\u610f\u8bc6\uff0c\u80fd\u6839\u636e\u9700\u6c42\u8c03\u6574\u8d44\u6e90\u4ee5\u63d0\u5347\u4ea4\u4ed8\u54c1\u8d28\u548c\u8fd0\u884c\u6548\u7387\uff1b&lt;/li&gt;\n&lt;li&gt;\u80fd\u9ad8\u6548\u534f\u540c\u591a\u5c97\u4f4d\u5171\u540c\u63a8\u8fdb\u9879\u76ee\u76ee\u6807\uff1b&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;br&gt;&lt;br&gt;&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;\u52a0\u5206\u9879&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;&amp;nbsp;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;\u62e5\u6709\u4e00\u5e74\u4ee5\u4e0aUnreal Engine 5\uff08UE5\uff09\u9879\u76ee\u573a\u666f\u5730\u7f16\u7ecf\u9a8c\u6216\u53c2\u4e0e\u8fc7UE5\u5927\u578b\u6e38\u620f\u9879\u76ee\u8005\u52a0\u5206\uff1b&lt;/li&gt;\n&lt;li&gt;\u719f\u6089PBR\u6d41\u7a0b\u3001\u5730\u7f16\u5de5\u5177\u6216\u5173\u5361\u7f16\u8f91\u5668\uff0c\u6709\u76f8\u5173\u63d2\u4ef6\u6216\u5de5\u5177\u5f00\u53d1\u7ecf\u9a8c\uff1b&lt;/li&gt;\n&lt;li&gt;\u6709\u56fd\u9645\u5316\u3001\u591a\u6587\u5316\u56e2\u961f\u534f\u4f5c\u7ecf\u9a8c\uff1b&lt;/li&gt;\n&lt;li&gt;\u82f1\u8bed\u53e3\u8bed\u6d41\u5229\uff0c\u80fd\u9605\u8bfb\u6216\u7f16\u5199\u82f1\u6587\u6280\u672f\u6587\u6863\u3002&lt;/li&gt;\n&lt;/ul&gt;\n&lt;div class=&quot;widget__wrapper widget__wrapper--jobdescription js-widget js-widget--desktop visible--desktop js-widget--tablet visible--tablet js-widget--mobile visible--mobile&quot; data-widget-id=&quot;47cb18e00ded270c16eeb8a5ec30ad22&quot;&gt;\n&lt;div class=&quot;widget widget--job-description widget--spacing-small&quot;&gt;\n&lt;div class=&quot;content-gutter content-center&quot;&gt;\n&lt;div class=&quot;job-description&quot;&gt;\n&lt;div class=&quot;copy copy--large prose&quot;&gt;\n&lt;div&gt;\n&lt;p&gt;&lt;em&gt;\u7528\u5de5\u6027\u8d28\uff1a\u4e0e\u4e13\u4e1a\u4eba\u4e8b\u670d\u52a1\u516c\u53f8FESCO Adecco\u7b7e\u8ba2\u52b3\u52a8\u5408\u540c&lt;/em&gt;&lt;/p&gt;\n&lt;/div&gt;\n&lt;/div&gt;\n&lt;/div&gt;\n&lt;/div&gt;\n&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=&quot;widget__wrapper widget__wrapper--applyform js-widget js-widget--desktop visible--desktop js-widget--tablet visible--tablet js-widget--mobile visible--mobile&quot; data-widget-id=&quot;0dcedb73cedf52cf9ca25cf878d5b30e&quot;&gt;\n&lt;div class=&quot;widget widget--spacing-small&quot;&gt;\n&lt;div class=&quot;content-gutter content-center content-center--6-12&quot;&gt;\n&lt;div class=&quot;js-apply-form-wrapper&quot; data-props=&quot;{&amp;quot;jobId&amp;quot;:&amp;quot;7921706&amp;quot;,&amp;quot;jobBoard&amp;quot;:&amp;quot;riotgames&amp;quot;}&quot;&gt;\n&lt;div class=&quot;apply-form&quot;&gt;\n&lt;div class=&quot;apply-form__reveal&quot;&gt;&amp;nbsp;&lt;/div&gt;\n&lt;/div&gt;\n&lt;/div&gt;\n&lt;/div&gt;\n&lt;/div&gt;\n&lt;/div&gt;\n&lt;p&gt;&lt;em&gt;For this role, you&#39;ll find success through craft expertise, a collaborative spirit, and decision-making that prioritizes the delight of players. We will be looking at your past studies, experience, and your personal relationship with games. If you embody player empathy and care about players&#39; experiences, this could be your role!&lt;/em&gt;&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;#LI-DNP&lt;/strong&gt;&lt;/p&gt;",
+   "departments": [
+    {
+     "id": 215530,
+     "name": "CN Game Studio",
+     "child_ids": [],
+     "parent_id": 89020
+    }
+   ],
+   "offices": [
+    {
+     "id": 274922,
+     "name": "Guangzhou, China",
+     "location": null,
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  }
+ ],
+ "meta": {
+  "total": 187
+ }
+}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Settings · Job Hunt{% endblock %}
+{% block content %}
+<div class="page page-narrow">
+  <div class="page-head">
+    <div>
+      <h1>Settings</h1>
+      <p class="muted">Your details, resumes, and which services are connected. Everything stays on this computer.</p>
+    </div>
+    <nav class="seg" aria-label="Settings sections">
+      {% for key, label in tabs %}
+      <a class="seg-opt {% if tab == key %}active{% endif %}" href="/settings?tab={{ key }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  {% if tab == "profile" %}
+    {% include "partials/settings_profile.html" %}
+  {% elif tab == "resumes" %}
+    {% include "partials/settings_resumes.html" %}
+  {% elif tab == "answers" %}
+    {% include "partials/settings_answers.html" %}
+  {% elif tab == "autopilot" %}
+    {% include "partials/settings_autopilot.html" %}
+  {% elif tab == "keys" %}
+    {% include "partials/settings_keys.html" %}
+  {% else %}
+    {% include "partials/settings_appearance.html" %}
+  {% endif %}
+</div>
+{% endblock %}

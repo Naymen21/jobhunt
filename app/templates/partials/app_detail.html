@@ -1,0 +1,200 @@
+{% import "partials/macros.html" as m %}
+<div class="drawer-head">
+  <div class="min0">
+    <div class="muted small">{{ j.company }} · job #{{ j.id }}</div>
+    <h2 class="drawer-title">{{ j.title }}</h2>
+    <div class="chip-row">
+      <span class="status-pill st-{{ a.status }}">{{ STATUS_LABELS[a.status] }}</span>
+      {% if due %}<span class="due-tag">Follow up due</span>{% endif %}
+      {% if j.work_mode %}<span class="pill mode-{{ j.work_mode }}"><span class="pill-dot"></span>{{ WORK_MODE_LABELS[j.work_mode] }}</span>{% endif %}
+      {% if j.job_type %}<span class="tag">{{ JOB_TYPE_LABELS[j.job_type] }}</span>{% endif %}
+      {% if pay %}<span class="tag">{{ pay }}</span>{% endif %}
+      <span class="tag">{{ (j.location or "Location not stated").split(";")[0] }}</span>
+    </div>
+  </div>
+  <button class="btn btn-quiet drawer-close" type="button" data-close-drawer aria-label="Close">Close</button>
+</div>
+
+{% if error %}<div class="inline-error">{{ error }}</div>{% endif %}
+
+{# ---- next step ---- #}
+<div class="next-step">
+  {% if a.status == "saved" %}
+    <div><strong>Waiting for drafts.</strong> <span class="muted small">Run <code>/draft-applications</code> in Claude Code, then reopen this.</span></div>
+    <form hx-post="/applications/{{ a.id }}/move" hx-target="#app-detail"><input type="hidden" name="status" value="approved">
+      <button class="btn">Skip drafts and approve</button></form>
+  {% elif a.status == "drafts_ready" %}
+    <div><strong>Review the drafts below.</strong> <span class="muted small">Edit anything, then approve. To rewrite: <code>/redraft {{ j.id }} your feedback</code></span></div>
+    <form hx-post="/applications/{{ a.id }}/move" hx-target="#app-detail"><input type="hidden" name="status" value="approved">
+      <button class="btn primary">Approve</button></form>
+  {% elif a.status == "approved" %}
+    <div><strong>Ready to send.</strong> <span class="muted small">Open the application, paste your letter and answers, submit it yourself, then mark it applied.</span></div>
+    <div class="row-actions">
+      <a class="btn" href="{{ j.apply_url or j.url }}" target="_blank" rel="noopener noreferrer">Open application</a>
+      <form hx-post="/applications/{{ a.id }}/move" hx-target="#app-detail"><input type="hidden" name="status" value="applied">
+        <button class="btn primary">Mark as applied</button></form>
+    </div>
+  {% else %}
+    <div><strong>{{ STATUS_LABELS[a.status] }}</strong>{% if a.applied_at %} <span class="muted small">· applied {{ a.applied_at }}</span>{% endif %}</div>
+    <div class="row-actions">
+      {% for s in next if s not in ["drafts_ready", "saved"] %}
+      <form hx-post="/applications/{{ a.id }}/move" hx-target="#app-detail"><input type="hidden" name="status" value="{{ s }}">
+        <button class="btn">{{ STATUS_LABELS[s] }}</button></form>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<div class="drawer-links small">
+  <a href="{{ j.apply_url or j.url }}" target="_blank" rel="noopener noreferrer">Open application</a>
+  <a href="{{ j.url }}" target="_blank" rel="noopener noreferrer">Original posting</a>
+  {% if a.status not in ["withdrawn"] %}
+  <form hx-post="/applications/{{ a.id }}/move" hx-target="#app-detail" hx-confirm="Withdraw this application? You can bring it back later.">
+    <input type="hidden" name="status" value="withdrawn"><button class="link-btn danger-link">Withdraw</button></form>
+  {% else %}
+  <form hx-post="/applications/{{ a.id }}/move" hx-target="#app-detail"><input type="hidden" name="status" value="saved"><button class="link-btn">Bring back to Saved</button></form>
+  {% endif %}
+</div>
+
+{# ---- scores + flags ---- #}
+<section class="drawer-section score-row">
+  <div class="score-box">{% if basic is not none %}{{ m.ring(basic, "md") }}{% else %}<span class="ring-empty">–</span>{% endif %}<div><div class="info-title">Basic match</div>
+    <div class="muted xsmall">{% if basic is not none %}keywords + search fit{% else %}not in a current search's results{% endif %}</div></div></div>
+  <div class="score-box ai">
+    {% if j.ai_score is not none %}{{ m.ring(j.ai_score, "md") }}{% else %}<span class="ring-empty">–</span>{% endif %}
+    <div class="min0"><div class="info-title">AI score</div>
+      <div class="muted xsmall">{% if j.ai_notes %}{{ j.ai_notes }}{% else %}not scored yet: run /score-jobs{% endif %}</div></div>
+  </div>
+</section>
+{% if flags %}
+<section class="drawer-section">
+  <h3>Eligibility</h3>
+  <ul class="flag-list">
+    {% for f in flags %}<li><span class="flag {% if f.key == 'hs_ok' %}flag-good{% elif f.key == 'pitch' %}flag-pitch{% endif %}">{{ f.label }}</span><span class="flag-quote">“{{ f.snippet }}”</span></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% if a.ai_notes %}
+<div class="notice ai-note"><span class="why-label">Notes from the draft</span> {{ a.ai_notes }}</div>
+{% endif %}
+
+{# ---- cover letter: requirements table (default for files) + plain text (for text boxes) ---- #}
+<section class="drawer-section cover-section" data-cover-view="{{ 'table' if table else 'plain' }}">
+  <div class="sec-head">
+    <h3>Cover letter</h3>
+    {% if a.cover_letter or table %}
+    <div class="seg seg-sm" role="tablist" aria-label="Cover letter version">
+      <button type="button" class="seg-opt {% if table %}active{% endif %}" data-cover-tab="table" {% if not table %}disabled title="Run /redraft {{ j.id }} to get the table version"{% endif %}>Table</button>
+      <button type="button" class="seg-opt {% if not table %}active{% endif %}" data-cover-tab="plain">Plain text</button>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if table %}
+  <div class="cover-pane" data-pane="table">
+    <form class="cover-table-form" hx-post="/applications/{{ a.id }}/cover-table" hx-trigger="input changed delay:900ms from:find textarea, blur from:find textarea" hx-target="#table-status-{{ a.id }}">
+      <label class="field-label">Opening</label>
+      <textarea class="prose-area" name="opening" rows="3">{{ table.opening }}</textarea>
+      <table class="req-table">
+        <thead><tr><th>What you're looking for</th><th>What I bring</th></tr></thead>
+        <tbody>
+        {% for r in table.rows %}
+          <tr><td><textarea class="prose-area" name="need" rows="2">{{ r.need }}</textarea></td>
+              <td><textarea class="prose-area" name="bring" rows="3">{{ r.bring }}</textarea></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <label class="field-label">Closing</label>
+      <textarea class="prose-area" name="closing" rows="2">{{ table.closing }}</textarea>
+    </form>
+    <div class="cover-foot">
+      <div class="small" id="table-status-{{ a.id }}">{% if a.table_edited %}<span class="pop-text">Edited by you</span>{% else %}<span class="muted">AI draft, unedited</span>{% endif %}</div>
+      <div class="row-actions">
+        <a class="btn btn-sm" href="/applications/{{ a.id }}/cover-letter.pdf" download="{{ pdf_name }}">{% include "partials/icon_download.svg" %}PDF</a>
+        <a class="btn btn-sm" href="/applications/{{ a.id }}/cover-letter.docx" download="{{ docx_name }}">{% include "partials/icon_download.svg" %}DOCX</a>
+      </div>
+    </div>
+    <p class="muted xsmall">Files use this table version: {{ pdf_name }} / .docx. For application forms that only have a text box, use Plain text.</p>
+  </div>
+  {% endif %}
+
+  <div class="cover-pane" data-pane="plain">
+  {% if a.cover_letter or a.status != "saved" %}
+    <textarea class="prose-area cover-box" name="cover_letter" rows="16" id="cover-input-{{ a.id }}"
+              hx-post="/applications/{{ a.id }}/cover" hx-trigger="input changed delay:800ms, blur" hx-target="#cover-status-{{ a.id }}"
+              oninput="document.getElementById('cover-text-{{ a.id }}').innerText = this.value">{{ a.cover_letter }}</textarea>
+    <div hidden id="cover-text-{{ a.id }}">{{ a.cover_letter }}</div>
+    <div class="cover-foot">
+      <div class="small" id="cover-status-{{ a.id }}">
+        {% if a.cover_edited %}<span class="pop-text">Edited by you</span>{% elif a.cover_letter_ai %}<span class="muted">AI draft, unedited</span>{% endif %}
+        <span class="muted">· {{ words }} words{% if a.drafts_version %} · version {{ a.drafts_version }}{% endif %}</span>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-sm primary" type="button" data-copy-from="cover-text-{{ a.id }}">Copy</button>
+        <a class="btn btn-sm" href="/applications/{{ a.id }}/cover-letter.pdf?format=plain" download="{{ pdf_name }}">PDF</a>
+        <a class="btn btn-sm" href="/applications/{{ a.id }}/cover-letter.docx?format=plain" download="{{ docx_name }}">DOCX</a>
+      </div>
+    </div>
+  {% else %}
+    <div class="empty-list">No draft yet.</div>
+  {% endif %}
+  </div>
+</section>
+
+{# ---- answers ---- #}
+{% if answers %}
+<section class="drawer-section">
+  <h3>Application answers</h3>
+  <ul class="answer-list">
+    {% for ans in answers %}
+    <li>
+      <div class="ans-head"><span class="ans-q">{{ ans.question }}</span>
+        {% if ans.answer %}<button class="btn btn-sm" type="button" data-copy-from="ans-{{ a.id }}-{{ loop.index }}">Copy</button>{% endif %}</div>
+      {% if ans.answer %}<div class="ans-a" id="ans-{{ a.id }}-{{ loop.index }}">{{ ans.answer }}</div>
+      {% else %}<div class="muted small">No answer yet: add it under <a href="/settings?tab=answers">Settings → Answer bank</a>.</div>{% endif %}
+      <span class="muted xsmall">{{ "from your answer bank" if ans.source == "bank" else "drafted for this job" }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{# ---- outreach ---- #}
+<section class="drawer-section" hx-get="/applications/{{ a.id }}/outreach" hx-trigger="load" hx-swap="innerHTML">
+  <p class="muted small"><span class="spinner"></span> Loading outreach…</p>
+</section>
+
+{# ---- tracking ---- #}
+<section class="drawer-section track-grid">
+  <div>
+    <h3>Follow-up</h3>
+    {% if a.status in ["applied", "interview"] %}
+    <form class="follow-row" hx-post="/applications/{{ a.id }}/follow-up" hx-target="#app-detail">
+      <input type="date" name="follow_up_at" value="{{ a.follow_up_at or '' }}">
+      <button class="btn btn-sm">Set</button>
+    </form>
+    {% if a.follow_up_at %}
+    <form hx-post="/applications/{{ a.id }}/follow-up" hx-target="#app-detail"><input type="hidden" name="done" value="1">
+      <button class="link-btn">I followed up</button></form>
+    {% endif %}
+    {% else %}<p class="muted small">Set automatically to 7 days after you mark it applied.</p>{% endif %}
+  </div>
+  <div>
+    <h3>Your notes</h3>
+    <textarea class="prose-area" name="notes" rows="4" placeholder="Recruiter name, referral, anything to remember"
+              hx-post="/applications/{{ a.id }}/notes" hx-trigger="input changed delay:800ms, blur" hx-target="#notes-status-{{ a.id }}">{{ a.notes }}</textarea>
+    <div class="small" id="notes-status-{{ a.id }}"></div>
+  </div>
+</section>
+
+<section class="drawer-section">
+  <h3>History</h3>
+  <ul class="history-list small">
+    {% for e in events %}
+    <li><span class="muted">{{ e.at[:10] }}</span>
+      {% if e.kind == "status" %}{{ STATUS_LABELS.get(e.from_status, "New") if e.from_status else "Added" }} → <strong>{{ STATUS_LABELS[e.to_status] }}</strong>{% if e.note %} <span class="muted">({{ e.note }})</span>{% endif %}
+      {% else %}{{ e.note }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% if history %}<p class="muted xsmall">{{ history | length }} earlier draft{{ "" if history | length == 1 else "s" }} kept.</p>{% endif %}
+</section>

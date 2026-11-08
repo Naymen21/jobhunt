@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+{% block title %}Finder · Job Hunt{% endblock %}
+{% block content %}
+<div class="page">
+
+{# --- Finder: by company / by name -------------------------------------------------- #}
+<div class="page-head" data-head="finder">
+  <div>
+    <h1>Finder</h1>
+    <p class="muted">Find the people at a company, or one person's email.</p>
+  </div>
+  <div class="seg" role="tablist" data-finder-switch>
+    <button type="button" class="seg-opt" data-tab="company" role="tab">{% include "partials/icon_building.svg" %}By company</button>
+    <button type="button" class="seg-opt" data-tab="name" role="tab">{% include "partials/icon_people.svg" %}By name</button>
+  </div>
+</div>
+
+<section class="panel" data-panel="company" id="domain-search">
+  <form class="search-card" hx-post="/finder/domain-search" hx-target="#domain-search-slot" hx-swap="innerHTML"
+        hx-indicator="#company-spin" hx-disabled-elt="find button">
+    <label class="field-label" for="company-input">Company name or website</label>
+    <div class="search-row">
+      <span class="search-icon">{% include "partials/icon_globe.svg" %}</span>
+      <input id="company-input" name="domain" placeholder="Riot Games or riotgames.com" required autocomplete="off">
+      <button type="submit" class="btn primary">Search <span id="company-spin" class="spinner htmx-indicator"></span></button>
+    </div>
+    <details class="more-options">
+      <summary>More options</summary>
+      <div class="options-row">
+        <label class="opt"><span>GitHub organisation</span><input name="github_org" placeholder="optional" autocomplete="off"></label>
+        <label class="check-label"><input type="checkbox" name="refresh" value="true"> Search again even if saved</label>
+      </div>
+      <p class="muted small">Reads up to {{ max_pages }} pages of the company's own site (robots.txt respected) and its public GitHub commits.{% if not github_token %} No GitHub token set, so GitHub allows 60 lookups an hour.{% endif %}</p>
+    </details>
+    <div id="domain-chips" hx-get="/finder/domains" hx-trigger="domainsChanged from:body">
+      {% include "partials/domain_chips.html" %}
+    </div>
+  </form>
+  <div id="domain-search-slot" class="result-slot"></div>
+</section>
+
+<section class="panel" data-panel="name" hidden>
+  <form class="search-card" hx-post="/finder/find" hx-target="#find-result" hx-swap="innerHTML"
+        hx-indicator="#find-spin" hx-disabled-elt="find button">
+    <div class="split-fields">
+      <label class="field"><span class="field-label">Full name</span>
+        <input name="name" placeholder="Jane Doe" required autocomplete="off"></label>
+      <span class="split-at">@</span>
+      <label class="field"><span class="field-label">Company name or website</span>
+        <input name="domain" placeholder="Riot Games or riotgames.com" required autocomplete="off"></label>
+      <button type="submit" class="btn primary">Find email <span id="find-spin" class="spinner htmx-indicator"></span></button>
+    </div>
+  </form>
+  <div id="find-result" class="result-slot"></div>
+</section>
+
+{# --- Verifier ----------------------------------------------------------------------- #}
+<div class="page-head" data-head="verifier" hidden>
+  <div>
+    <h1>Verifier</h1>
+    <p class="muted">Check an address without sending anything.{% if smtp_transport == "disabled" %} Mailbox checks are off on this network, so results top out at "unknown".{% endif %}</p>
+  </div>
+</div>
+<section class="panel" data-panel="verifier" hidden>
+  <form class="search-card" hx-post="/finder/verify" hx-target="#result" hx-swap="innerHTML"
+        hx-indicator="#verify-spin" hx-disabled-elt="find button">
+    <label class="field-label" for="verify-input">Email address</label>
+    <div class="search-row">
+      <span class="search-icon">{% include "partials/icon_finder.svg" %}</span>
+      <input id="verify-input" type="email" name="email" placeholder="jane.doe@company.com" required autocomplete="off">
+      <button type="submit" class="btn primary">Verify <span id="verify-spin" class="spinner htmx-indicator"></span></button>
+    </div>
+  </form>
+  <div id="result" class="result-slot narrow"></div>
+</section>
+
+{# --- Bulks: find a list / verify a list ------------------------------------------------- #}
+<div class="page-head" data-head="bulk" hidden>
+  <div>
+    <h1>Bulks</h1>
+    <p class="muted">Work through a whole list at once. Rows run one at a time, politely.</p>
+  </div>
+  <div class="seg" role="tablist">
+    <button type="button" class="seg-opt active" data-bulk-tab="find">{% include "partials/icon_people.svg" %}Find a list</button>
+    <button type="button" class="seg-opt" data-bulk-tab="verify">{% include "partials/icon_finder.svg" %}Verify a list</button>
+  </div>
+</div>
+<section class="panel" data-panel="bulk" hidden>
+  <div data-bulk-pane="find">
+    <form class="card steps" hx-post="/finder/bulk-find/preview" hx-target="#bulk-find-slot" hx-swap="innerHTML">
+      <div class="step">
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <div class="step-title">Add your list</div>
+          <p class="muted small">A CSV with a name column (or first + last) and a company or website column. Up to 500 rows.</p>
+          <div class="upload-row">
+            <label class="btn">{% include "partials/icon_download.svg" %}Choose CSV file<input type="file" accept=".csv,.tsv,.txt" id="bulk-file" hidden></label>
+            <span class="muted small" id="bulk-file-name">or paste below</span>
+          </div>
+          <textarea name="table" id="bulk-find-input" rows="6" placeholder="name,company&#10;Jane Doe,Riot Games&#10;Kristine Halvorsen,snohetta.com"></textarea>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <div class="step-title">Check the columns</div>
+          <button type="submit" class="btn">Preview</button>
+        </div>
+      </div>
+    </form>
+    <div id="bulk-find-slot" class="result-slot"></div>
+  </div>
+
+  <div data-bulk-pane="verify" hidden>
+    <div class="card">
+      <label class="field-label" for="bulk-input">Email addresses</label>
+      <textarea id="bulk-input" rows="7" placeholder="One per line, or comma separated"></textarea>
+      <div class="bulk-actions">
+        <button id="bulk-start" class="btn primary" type="button">Verify list</button>
+        <button id="bulk-stop" class="btn" type="button" hidden>Stop</button>
+        <span id="bulk-progress" class="muted small"></span>
+      </div>
+    </div>
+    <div class="table-card" id="bulk-table-wrap" hidden>
+      <table class="table">
+        <thead><tr><th>Email</th><th>Status</th><th>Confidence</th><th>Notes</th></tr></thead>
+        <tbody id="bulk-rows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+{# --- History ------------------------------------------------------------------------- #}
+<div class="page-head" data-head="history" hidden>
+  <div>
+    <h1>History</h1>
+    <p class="muted">Every address you've verified. Click one to see the full result.</p>
+  </div>
+  <button class="btn" hx-post="/finder/history/clear" hx-target="#history-rows"
+          hx-confirm="Delete all verification history?">Clear history</button>
+</div>
+<section class="panel" data-panel="history" hidden>
+  <div class="table-card">
+    <table class="table">
+      <thead><tr><th>Email</th><th>Status</th><th>Confidence</th><th>When</th></tr></thead>
+      <tbody id="history-rows" hx-get="/finder/history" hx-trigger="historyChanged from:body">
+        {% include "partials/history_rows.html" %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  /* ---- Bulk verify (client loop over /verify-row) ---- */
+  const input = document.getElementById("bulk-input");
+  const start = document.getElementById("bulk-start");
+  const stop = document.getElementById("bulk-stop");
+  const progress = document.getElementById("bulk-progress");
+  const rows = document.getElementById("bulk-rows");
+  const wrap = document.getElementById("bulk-table-wrap");
+  let cancelled = false;
+
+  function parse(text) {
+    const seen = new Set();
+    return text.split(/[\s,;]+/).map(s => s.trim()).filter(s => {
+      const key = s.toLowerCase();
+      if (!s || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  start.addEventListener("click", async () => {
+    const emails = parse(input.value);
+    if (!emails.length) return;
+    cancelled = false;
+    rows.innerHTML = "";
+    wrap.hidden = false;
+    start.disabled = true;
+    stop.hidden = false;
+    for (let i = 0; i < emails.length && !cancelled; i++) {
+      progress.textContent = `Checking ${i + 1} of ${emails.length}: ${emails[i]}`;
+      const pending = document.createElement("tr");
+      pending.innerHTML = `<td class="email-cell"></td><td colspan="3"><span class="spinner"></span></td>`;
+      pending.firstChild.textContent = emails[i];
+      rows.appendChild(pending);
+      try {
+        const res = await fetch("/finder/verify-row", {
+          method: "POST",
+          headers: {"Content-Type": "application/x-www-form-urlencoded"},
+          body: new URLSearchParams({email: emails[i]}),
+        });
+        if (!res.ok) throw new Error(res.status);
+        pending.outerHTML = await res.text();
+        htmx.process(rows.lastElementChild);
+      } catch (err) {
+        pending.lastChild.innerHTML = `<span class="muted small">Request failed (${err.message})</span>`;
+      }
+    }
+    progress.textContent = cancelled ? "Stopped." : `Done: ${emails.length} checked.`;
+    start.disabled = false;
+    stop.hidden = true;
+    htmx.trigger(document.body, "historyChanged");
+  });
+  stop.addEventListener("click", () => { cancelled = true; progress.textContent = "Stopping after current check…"; });
+
+  /* ---- Bulk find: CSV file goes into the textarea ---- */
+  document.getElementById("bulk-file").addEventListener("change", (ev) => {
+    const file = ev.target.files[0];
+    if (!file) return;
+    file.text().then(text => {
+      document.getElementById("bulk-find-input").value = text;
+      document.getElementById("bulk-file-name").textContent = `${file.name} loaded`;
+    });
+  });
+  document.querySelectorAll("[data-bulk-tab]").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll("[data-bulk-tab]").forEach(b => b.classList.toggle("active", b === btn));
+    document.querySelectorAll("[data-bulk-pane]").forEach(p => { p.hidden = p.dataset.bulkPane !== btn.dataset.bulkTab; });
+  }));
+
+  /* ---- Panels: the URL hash picks one, so the rail links and the back button work ---- */
+  const panels = [...document.querySelectorAll("[data-panel]")].map(p => p.dataset.panel);
+  const navFor = {company: "finder", name: "finder", verifier: "verifier", bulk: "bulk", history: "history"};
+  function showPanel(name) {
+    if (!panels.includes(name)) name = "company";
+    document.querySelectorAll("[data-panel]").forEach(p => { p.hidden = p.dataset.panel !== name; });
+    document.querySelectorAll("[data-head]").forEach(h => { h.hidden = h.dataset.head !== navFor[name]; });
+    document.querySelectorAll("[data-tab]").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+    document.querySelectorAll(".side-nav [data-nav]").forEach(a => a.classList.toggle("active", a.dataset.nav === navFor[name]));
+    if (location.hash.slice(1) !== name) history.replaceState(null, "", "#" + name);
+  }
+  document.querySelectorAll("[data-tab]").forEach(t => t.addEventListener("click", () => showPanel(t.dataset.tab)));
+  window.addEventListener("hashchange", () => showPanel(location.hash.slice(1)));
+  document.querySelector('.side-nav [data-nav="finder"]').addEventListener("click", (ev) => {
+    const open = location.hash.slice(1);
+    if (open === "company" || open === "name") ev.preventDefault();  // keep the Finder mode that was open
+  });
+  showPanel(location.hash.slice(1) || "company");
+  const slotPanel = {"result": "verifier", "find-result": "name", "domain-search-slot": "company"};
+  document.body.addEventListener("htmx:afterSwap", (ev) => {
+    const panel = slotPanel[ev.detail.target.id];
+    if (panel) showPanel(panel);
+  });
+
+  /* ---- Copy buttons ---- */
+  document.addEventListener("click", async (ev) => {
+    const btn = ev.target.closest("[data-copy]");
+    if (!btn) return;
+    const label = btn.textContent;
+    try { await navigator.clipboard.writeText(btn.dataset.copy); btn.textContent = "Copied"; }
+    catch { btn.textContent = "Copy failed"; }
+    setTimeout(() => { btn.textContent = label; }, 1500);
+  });
+
+  /* ---- Domain results: filters ---- */
+  function applyFilters(box) {
+    const picked = (group) => [...box.querySelectorAll(`[data-filter="${group}"]:checked`)].map(i => i.value);
+    const depts = picked("dept"), levels = picked("seniority"), kinds = picked("kind");
+    const freshOnly = box.querySelector("[data-filter-fresh]")?.checked;
+    let shown = 0;
+    box.querySelectorAll("tr[data-row]").forEach(tr => {
+      const ok = (!depts.length || depts.includes(tr.dataset.dept))
+        && (!levels.length || levels.includes(tr.dataset.seniority))
+        && (!kinds.length || kinds.includes(tr.dataset.kind))
+        && (!freshOnly || tr.dataset.stale !== "1");
+      tr.hidden = !ok;
+      if (ok) shown++;
+    });
+    box.querySelector("[data-shown]").textContent = shown;
+    box.querySelector("[data-no-match]").hidden = shown > 0;
+    const active = depts.length + levels.length + kinds.length + (freshOnly ? 1 : 0);
+    box.querySelector("[data-filter-count]").textContent = active ? `${active} on` : "";
+    box.querySelector("[data-filter-reset]").hidden = !active;
+    box.querySelectorAll("[data-quick-dept]").forEach(b =>
+      b.classList.toggle("active", depts.length === 1 && depts[0] === b.dataset.quickDept));
+    const params = new URLSearchParams();
+    if (kinds.length === 1) params.set("kind", kinds[0]);
+    if (depts.length) params.set("dept", depts.join(","));
+    if (levels.length) params.set("seniority", levels.join(","));
+    if (freshOnly) params.set("fresh", "true");
+    const csv = box.querySelector("[data-csv]");
+    csv.href = csv.href.split("?")[0] + (params.toString() ? `?${params}` : "");
+  }
+  document.addEventListener("change", (ev) => {
+    const box = ev.target.closest(".domain-results");
+    if (box && ev.target.matches("[data-filter], [data-filter-fresh]")) applyFilters(box);
+  });
+  document.addEventListener("click", (ev) => {
+    const quick = ev.target.closest("[data-quick-dept]");
+    const reset = ev.target.closest("[data-filter-reset]");
+    const box = (quick || reset)?.closest(".domain-results");
+    if (!box) return;
+    const wasOnly = quick && quick.classList.contains("active");
+    box.querySelectorAll("[data-filter], [data-filter-fresh]").forEach(i => { i.checked = false; });
+    if (quick && !wasOnly) box.querySelector(`[data-filter="dept"][value="${quick.dataset.quickDept}"]`).checked = true;
+    applyFilters(box);
+  });
+
+  /* ---- Opened from a job ("Find people here"): /finder?company=riotgames.com&depts=recruiting,engineering ---- */
+  const asked = new URLSearchParams(location.search);
+  let pendingDepts = (asked.get("depts") || "").split(",").filter(Boolean);
+  if (asked.get("company")) {
+    showPanel("company");
+    document.getElementById("company-input").value = asked.get("company");
+    // htmx loads with defer, so it's ready by DOMContentLoaded, not while this inline script runs
+    document.addEventListener("DOMContentLoaded", () =>
+      htmx.ajax("POST", "/finder/domain-search", {target: "#domain-search-slot", swap: "innerHTML",
+                                                  values: {domain: asked.get("company")}}));
+  }
+  document.body.addEventListener("htmx:afterSettle", () => {
+    const box = document.querySelector("#domain-search-slot .domain-results");
+    if (!box || !pendingDepts.length) return;
+    let any = false;
+    pendingDepts.forEach(d => {
+      const input = box.querySelector(`[data-filter="dept"][value="${d}"]`);
+      if (input) { input.checked = true; any = true; }
+    });
+    pendingDepts = [];
+    if (any) applyFilters(box);
+  });
+})();
+</script>
+{% endblock %}

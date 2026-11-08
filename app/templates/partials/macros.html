@@ -1,0 +1,22 @@
+{# Confidence ring: a small circular gauge with the score inside. #}
+{% macro ring(score, size="md", title="") -%}
+<span class="ring ring-{{ size }} {{ score | tier }}" role="img" aria-label="{{ score }}% confidence"{% if title %} title="{{ title }}"{% endif %}>
+  <svg viewBox="0 0 36 36" aria-hidden="true">
+    <circle class="ring-track" cx="18" cy="18" r="15.9155" />
+    <circle class="ring-fill" cx="18" cy="18" r="15.9155" stroke-dasharray="{{ score }} 100" />
+  </svg>
+  <span class="ring-num">{{ score }}</span>
+</span>
+{%- endmacro %}
+
+{# Initials avatar, coloured consistently per name. #}
+{% macro avatar(name, size="md") -%}
+{% set parts = (name or "?").split() %}
+<span class="av av-{{ size }} {{ name | avatar_class }}" aria-hidden="true">{{ ((parts[0][0] ~ (parts[-1][0] if parts | length > 1 else "")) | upper) if name else "?" }}</span>
+{%- endmacro %}
+
+{# Department pill with a coloured dot. #}
+{% macro dept(key) -%}
+{% if key %}<span class="pill dept-{{ key }}"><span class="pill-dot"></span>{{ DEPARTMENT_LABELS.get(key, key) }}</span>
+{% else %}<span class="muted small">-</span>{% endif %}
+{%- endmacro %}

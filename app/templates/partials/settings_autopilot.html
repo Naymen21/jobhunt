@@ -1,0 +1,102 @@
+<div class="stack" id="autopilot-settings">
+<form class="card form-card" hx-post="/settings/autopilot" hx-target="#autopilot-settings" hx-swap="outerHTML">
+  <div class="form-section">
+    <h2>Autopilot</h2>
+    <p class="muted small">Every morning it searches, discovers small companies, scores, saves the best jobs, drafts letters and
+      emails, and finds people. You review on the <a href="/review">Review</a> page. It never sends or submits anything:
+      only what you approve goes out. AI steps run through Claude Code on your subscription and stop at its usage limit.</p>
+    <label class="check-label"><input type="checkbox" name="enabled" {% if ap.enabled %}checked{% endif %}> Autopilot on</label>
+  </div>
+  <div class="form-section">
+    <h3 class="form-sub">Auto-save rules</h3>
+    <div class="form-grid">
+      <label class="form-field"><span class="field-label">Minimum AI score</span><input type="number" name="min_ai_score" min="0" max="100" value="{{ ap.min_ai_score }}"></label>
+      <label class="form-field"><span class="field-label">Max new saves per day</span><input type="number" name="max_saves_per_day" min="0" max="50" value="{{ ap.max_saves_per_day }}"></label>
+    </div>
+    <p class="hint">Saves jobs that are eligible for you or a pitch candidate (small company), best first.</p>
+  </div>
+  <div class="form-section">
+    <h3 class="form-sub">Daily caps on Claude work (protects your weekly usage)</h3>
+    <div class="form-grid four">
+      <label class="form-field"><span class="field-label">AI scores</span><input type="number" name="cap_scores" min="0" max="50" value="{{ ap.cap_scores }}"></label>
+      <label class="form-field"><span class="field-label">Application drafts</span><input type="number" name="cap_app_drafts" min="0" max="50" value="{{ ap.cap_app_drafts }}"></label>
+      <label class="form-field"><span class="field-label">Outreach drafts</span><input type="number" name="cap_outreach_drafts" min="0" max="50" value="{{ ap.cap_outreach_drafts }}"></label>
+      <label class="form-field"><span class="field-label">Redrafts</span><input type="number" name="cap_redrafts" min="0" max="50" value="{{ ap.cap_redrafts }}"></label>
+    </div>
+  </div>
+  <div class="form-section">
+    <h3 class="form-sub">Sources</h3>
+    <div class="scope-row">
+      {% for key, label in [("source_yc", "YC directory (yc-oss)"), ("source_yc_small", "All small YC companies (cold pitches)"), ("source_builtin", "Built In Minnesota"), ("source_hn", "Hacker News Who is hiring"), ("source_simplify", "Simplify internship list")] %}
+      <label class="check-label"><input type="checkbox" name="{{ key }}" {% if ap[key] %}checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </div>
+    <div class="form-grid">
+      <label class="form-field"><span class="field-label">LinkedIn results per run (max 50)</span><input type="number" name="linkedin_results" min="1" max="50" value="{{ ap.linkedin_results }}"></label>
+      <label class="form-field"><span class="field-label">Company sites crawled for people per day</span><input type="number" name="finder_searches_per_day" min="0" max="10" value="{{ ap.finder_searches_per_day }}"></label>
+      <label class="form-field"><span class="field-label">Cold pitches started per day (0 = off)</span><input type="number" name="cold_per_day" min="0" max="10" value="{{ ap.cold_per_day }}">
+        <span class="hint">Picks companies from your <a href="/outreach?view=companies">Find companies</a> filters, a founder or tech lead
+          whose address was seen in public, and drafts the email (counts toward outreach drafts). You still approve each one.</span></label>
+    </div>
+  </div>
+  <div class="form-section">
+    <h3 class="form-sub">Maintenance</h3>
+    <div class="form-grid">
+      <label class="form-field wide"><span class="field-label">Backup folder (compressed copy of the database each day, newest {{ ap.backups_keep }} kept)</span>
+        <input name="backup_dir" value="{{ ap.backup_dir }}"></label>
+    </div>
+  </div>
+  <div class="form-actions"><button class="btn primary">Save autopilot settings</button>{% if saved %}<span class="saved-note">Saved</span>{% endif %}</div>
+</form>
+
+<section class="card">
+  <div class="sec-head"><h2>Last run</h2>
+    <form hx-post="/settings/autopilot/run" hx-target="#autopilot-settings" hx-swap="outerHTML"><button class="btn btn-sm" {% if running %}disabled{% endif %}>{{ "Running…" if running else "Run now" }}</button></form></div>
+  {% if run %}
+  <p class="small">{{ run.kind }} · started {{ run.started_at | localtime }} · <strong>{{ run.status }}</strong> · Claude: {{ run.claude_status or "—" }}{% if run.claude_reset %} (resets {{ run.claude_reset }}){% endif %}</p>
+  <table class="table compact run-log"><thead><tr><th>Step</th><th>Status</th><th>Counts</th><th>Details</th></tr></thead>
+    <tbody>{% for item in run_log %}<tr><td>{{ item.step }}</td><td><span class="status-pill {{ 'st-applied' if item.status == 'ok' else ('st-rejected' if item.status in ['failed', 'limit', 'refused'] else 'st-saved') }}">{{ item.status }}</span></td>
+      <td class="small">{% for k, v in item.counts.items() %}{{ k.replace("_", " ") }} {{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+      <td class="small muted">{{ item.detail[:220] }}</td></tr>{% endfor %}</tbody></table>
+  {% if running %}<div hx-get="/settings/autopilot/status" hx-trigger="every 5s" hx-target="#autopilot-settings" hx-swap="outerHTML"></div>{% endif %}
+  {% else %}<p class="muted small">No runs yet.</p>{% endif %}
+</section>
+
+<section class="card">
+  {% set pf = platform() %}
+  {% if pf.windows %}
+  <h2>Schedule it (Windows Task Scheduler)</h2>
+  <p class="muted small">Set up two tasks: the morning run and an afternoon catch-up that finishes AI steps a usage limit stopped.
+    Your computer can be asleep (it wakes up) but not shut down.</p>
+  <ol class="steps-list small">
+    <li>Start menu → type <strong>Task Scheduler</strong> → open it → <strong>Create Task…</strong> (not "Basic Task").</li>
+    <li><strong>General:</strong> name <code>jobhunt autopilot</code>; choose <em>Run only when user is logged on</em>.</li>
+    <li><strong>Triggers → New:</strong> Daily, 6:30 AM.</li>
+    <li><strong>Actions → New:</strong> Program <code>{{ pf.python }}</code>, arguments <code>scriptsutopilot.py</code>, start in <code>{{ pf.root }}</code>.</li>
+    <li><strong>Conditions:</strong> tick <em>Wake the computer to run this task</em>; untick <em>Start only if on AC power</em> if you want it on battery.</li>
+    <li><strong>Settings:</strong> tick <em>Run task as soon as possible after a scheduled start is missed</em>; "Stop the task if it runs longer than" 3 hours.</li>
+    <li>Repeat for <code>jobhunt catch-up</code>: Daily 1:30 PM, arguments <code>scriptsutopilot.py --kind catch-up</code>.</li>
+    <li>Test: right-click the task → <strong>Run</strong>, then check the log here.</li>
+  </ol>
+  {% else %}
+  <h2>Schedule it ({{ "macOS launchd" if pf.mac else "cron" }})</h2>
+  <p class="muted small">Two runs a day: the morning run (6:30 AM) and an afternoon catch-up (1:30 PM) that finishes AI steps a
+    usage limit stopped. A run missed while the computer was asleep starts when it wakes.</p>
+  <ol class="steps-list small">
+    {% if pf.mac %}
+    <li>Open <strong>Terminal</strong> and run:<br><code>cd "{{ pf.root }}" &amp;&amp; ./scripts/schedule_mac.sh</code><br>
+      It adds two jobs to <code>~/Library/LaunchAgents</code> (it prints exactly what it writes). Nothing else on your Mac changes.</li>
+    <li>Optional, so the Mac wakes up for the morning run: <code>sudo pmset repeat wakeorpoweron MTWRFSU 06:25:00</code></li>
+    <li>Test now: <code>launchctl start com.jobhunt.autopilot</code>, then check the log here.</li>
+    <li>To remove them later: <code>./scripts/schedule_mac.sh --remove</code></li>
+    {% else %}
+    <li>Run <code>crontab -e</code> and add:<br>
+      <code>30 6 * * * cd "{{ pf.root }}" &amp;&amp; {{ pf.python }} scripts/autopilot.py</code><br>
+      <code>30 13 * * * cd "{{ pf.root }}" &amp;&amp; {{ pf.python }} scripts/autopilot.py --kind catch-up</code></li>
+    {% endif %}
+  </ol>
+  {% endif %}
+  <p class="muted xsmall">To keep Claude from ever using paid usage, leave <em>extra usage</em> turned off in your claude.ai settings.
+    The autopilot also refuses to run if an ANTHROPIC_API_KEY exists on this computer.</p>
+</section>
+</div>

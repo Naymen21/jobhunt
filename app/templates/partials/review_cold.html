@@ -1,0 +1,42 @@
+{# one cold pitch (no posting) on the Review page; ct = ContactRow, co = company profile or None #}
+<article class="card review-card" id="rc-cold-{{ ct.id }}">
+  <div class="rc-head">
+    <span class="co-mark {{ ct.company | avatar_class }}">{{ (ct.company or "?")[:1] | upper }}</span>
+    <div class="min0">
+      <div class="rc-title">{{ ct.company }}
+        <span class="flag flag-pitch">Cold pitch</span>
+        {% if co and co.employees %}<span class="size-tag" title="{{ co.employees_source }}">· ~{{ co.employees }} people</span>{% endif %}
+        {% if co and co.local %}<span class="local-tag">Local</span>{% endif %}</div>
+      <div class="muted small">{{ co.one_liner if co else "" }}</div>
+    </div>
+  </div>
+  {% if error %}<div class="inline-error">{{ error }}</div>{% endif %}
+  {% if notice %}<div class="notice">{{ notice }}</div>{% endif %}
+  <section class="rc-section">
+    <div class="rc-contact">
+      <div class="small"><strong>{{ ct.name or ct.email }}</strong> <span class="muted">{{ ct.title }}</span>
+        <span class="status-pill out-{{ ct.status }}">{{ OUT_LABELS[ct.status] }}</span>
+        {% if not queue_ok[0] and ct.status in ["picked", "draft_ready"] %}<span class="flag">{{ queue_ok[1] }}</span>{% endif %}
+        <a class="xsmall" href="/outreach?contact={{ ct.id }}">full thread</a></div>
+      {% if ct.drafts_version %}
+      <form class="rc-email" hx-post="/outreach/{{ ct.id }}/edit" hx-trigger="input changed delay:900ms from:find textarea, input changed delay:900ms from:find input" hx-target="#rc-ed-{{ ct.id }}">
+        <input name="subject" value="{{ ct.subject }}" {% if ct.status not in ["picked", "draft_ready", "approved"] %}readonly{% endif %}>
+        <textarea class="prose-area" name="body" rows="8" {% if ct.status not in ["picked", "draft_ready", "approved"] %}readonly{% endif %}>{{ ct.body }}</textarea>
+        <details class="small"><summary>Follow-ups (sent only if no reply)</summary>
+          <textarea class="prose-area" name="followup1" rows="3">{{ ct.followup1 }}</textarea>
+          <textarea class="prose-area" name="followup2" rows="2">{{ ct.followup2 }}</textarea></details>
+        <span class="xsmall" id="rc-ed-{{ ct.id }}">{% if ct.edited %}<span class="pop-text">Edited by you</span>{% endif %}</span>
+      </form>
+      {% if ct.hook_source %}<p class="xsmall muted">Hook: {{ ct.hook }} <a href="{{ ct.hook_source }}" target="_blank" rel="noopener noreferrer">source</a></p>{% endif %}
+      {% else %}<p class="xsmall muted">Waiting for drafts (the autopilot writes them; or run <code>/draft-outreach</code>).</p>{% endif %}
+    </div>
+  </section>
+  <div class="rc-actions">
+    {% if ct.status == "draft_ready" %}
+    <button class="btn primary" hx-post="/review/cold/{{ ct.id }}/looks-good" hx-target="#rc-cold-{{ ct.id }}" hx-swap="outerHTML">Looks good</button>
+    {% endif %}
+    <form class="redraft-form" hx-post="/review/cold/{{ ct.id }}/redraft" hx-target="#rc-cold-{{ ct.id }}" hx-swap="outerHTML">
+      <input name="note" placeholder="What to change (redraft)"><button class="btn btn-sm">Redraft</button></form>
+    <button class="btn btn-sm btn-quiet" hx-post="/review/cold/{{ ct.id }}/skip" hx-target="#rc-cold-{{ ct.id }}" hx-swap="outerHTML">Skip</button>
+  </div>
+</article>

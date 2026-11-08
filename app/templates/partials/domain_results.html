@@ -1,0 +1,143 @@
+{% import "partials/macros.html" as m %}
+{% set p = report.pattern %}
+{% set labels = {"website": "Company website", "github": "GitHub commits", "websearch": "Web search"} %}
+<div class="domain-results" id="domain-results">
+
+  {# ---- summary header ---- #}
+  <div class="card result-head">
+    <div class="rh-left">
+      <div class="faces">
+        {% for f in faces %}{{ m.avatar(f, "sm") }}{% endfor %}
+        {% if personal_count > faces | length %}<span class="av av-sm av-more">+{{ personal_count - faces | length }}</span>{% endif %}
+      </div>
+      <div>
+        <div class="rh-title"><strong>{{ rows | length }}</strong> addresses at <strong>{{ report.domain }}</strong></div>
+        <div class="muted small">{% if cached %}Saved search from {% else %}Searched {% endif %}{{ report.searched_at | ago }}
+          {% if stale_count %}&middot; {{ stale_count }} not seen in the latest search{% endif %}</div>
+      </div>
+    </div>
+    <div class="rh-right">
+      {% if p.template %}
+      <div class="pattern-chip" title="{{ p.support }} of {{ p.total }} named examples{% if p.variant_support %}; {{ p.variant_support }} more use {{ display_template(p.variants[0]) }} when the first choice is taken{% endif %}">
+        {{ m.ring(p.confidence, "sm") }}
+        <div><div class="muted xsmall">Email pattern</div><div class="mono">{{ display_template(p.template, report.domain) }}</div></div>
+      </div>
+      {% else %}
+      <div class="pattern-chip muted small">No pattern yet: no names next to addresses</div>
+      {% endif %}
+      <button class="btn" hx-post="/finder/domain-search" hx-target="#domain-search-slot" hx-swap="innerHTML"
+              hx-vals='{{ {"domain": report.domain, "refresh": "true", "github_org": report.github_org or ""} | tojson }}'>
+        {% include "partials/icon_refresh.svg" %}Search again</button>
+      <a class="btn" data-csv href="/finder/domains/{{ report.domain }}/emails.csv" download>{% include "partials/icon_download.svg" %}Export CSV</a>
+    </div>
+  </div>
+
+  {% if report.robots_blocked %}
+  <div class="notice warn">The company website was skipped because its robots.txt doesn't allow crawling. These come from other sources only.</div>
+  {% endif %}
+
+  {# ---- department breakdown: each tile filters to that department ---- #}
+  {% if dept_counts %}
+  <div class="breakdown" role="group" aria-label="People by department">
+    {% for key, n in dept_counts %}
+    <button type="button" class="bd-tile dept-{{ key }}" data-quick-dept="{{ key }}" title="Show only {{ DEPARTMENT_LABELS.get(key, 'no title') }}">
+      <span class="bd-num">{{ n }}</span>
+      <span class="bd-label"><span class="pill-dot"></span>{{ DEPARTMENT_LABELS.get(key, "No title found") }}</span>
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="results-grid">
+    {# ---- filters ---- #}
+    <aside class="card filters" aria-label="Narrow results">
+      <div class="filters-head">
+        <span>Narrow results <span class="filter-count" data-filter-count></span></span>
+        <button type="button" class="link-btn" data-filter-reset hidden>Reset</button>
+      </div>
+      <fieldset>
+        <legend>Department</legend>
+        {% for key, n in dept_counts %}
+        <label class="fopt"><input type="checkbox" data-filter="dept" value="{{ key }}">
+          <span class="pill-dot dept-{{ key }}"></span><span class="fopt-label">{{ DEPARTMENT_LABELS.get(key, "No title found") }}</span><span class="fopt-n">{{ n }}</span></label>
+        {% endfor %}
+      </fieldset>
+      <fieldset>
+        <legend>Seniority</legend>
+        {% for key, n in seniority_counts %}
+        <label class="fopt"><input type="checkbox" data-filter="seniority" value="{{ key }}">
+          <span class="fopt-label">{{ SENIORITY_LABELS.get(key, "Not clear") }}</span><span class="fopt-n">{{ n }}</span></label>
+        {% endfor %}
+      </fieldset>
+      <fieldset>
+        <legend>Type</legend>
+        <label class="fopt"><input type="checkbox" data-filter="kind" value="personal"><span class="fopt-label">People</span><span class="fopt-n">{{ personal_count }}</span></label>
+        <label class="fopt"><input type="checkbox" data-filter="kind" value="role"><span class="fopt-label">Shared inboxes</span><span class="fopt-n">{{ role_count }}</span></label>
+      </fieldset>
+      {% if stale_count %}
+      <fieldset>
+        <legend>Freshness</legend>
+        <label class="fopt"><input type="checkbox" data-filter-fresh><span class="fopt-label">Only seen in latest search</span></label>
+      </fieldset>
+      {% endif %}
+      <details class="sources-box">
+        <summary>Where these came from</summary>
+        <ul class="source-list">
+          {% for s in report.sources %}
+          <li><span class="dot {% if s.status == 'ok' %}dot-ok{% elif s.status in ['not_configured', 'skipped'] %}dot-off{% else %}dot-warn{% endif %}"></span>
+            <div><div>{{ labels.get(s.source, s.source) }}</div><div class="muted xsmall">{{ s.message }}</div></div></li>
+          {% endfor %}
+        </ul>
+        {% if p.template %}
+        <div class="muted xsmall pattern-note">Pattern: {{ p.support }} of {{ p.total }} named examples use {{ display_template(p.template) }}{% if p.variant_support %}, {{ p.variant_support }} more use {{ display_template(p.variants[0]) }} when it's taken{% endif %}.</div>
+        {% endif %}
+      </details>
+    </aside>
+
+    {# ---- table ---- #}
+    <div class="table-card">
+      <div class="table-meta"><span><strong data-shown>{{ rows | length }}</strong> shown</span></div>
+      <div class="table-scroll">
+        <table class="table people">
+          <thead><tr><th>Name</th><th>Title</th><th>Department &middot; level</th><th>Email</th><th class="center">Score</th><th>Last seen</th></tr></thead>
+          <tbody>
+          {% for row in rows %}
+            {% set e = row.e %}
+            {% set score = found_email_score(e.kind, e.full_name is not none) %}
+            <tr data-row data-kind="{{ e.kind }}" data-dept="{{ e.department or 'unknown' }}" data-seniority="{{ e.seniority or 'unknown' }}"
+                data-stale="{{ 1 if row.stale else 0 }}" class="{% if row.stale %}stale{% endif %}">
+              <td>
+                <div class="who">
+                  {% if e.full_name %}{{ m.avatar(e.full_name, "sm") }}<span class="who-name">{{ e.full_name }}</span>
+                  {% else %}<span class="av av-sm av-role">{% include "partials/icon_finder.svg" %}</span><span class="who-name muted">{{ "Shared inbox" if e.kind == "role" else "Name not found" }}</span>{% endif %}
+                </div>
+              </td>
+              <td class="title-cell">{{ e.title or "" }}</td>
+              <td>{{ m.dept(e.department) }}{% if e.seniority %}<div class="level">{{ SENIORITY_LABELS[e.seniority] }}</div>{% endif %}</td>
+              <td>
+                <div class="email-line"><span class="mono-ish">{{ e.email }}</span>
+                  <button type="button" class="icon-btn" data-copy="{{ e.email }}" title="Copy">Copy</button></div>
+                <details class="src-dd">
+                  <summary>{{ row.sources | length }} source{{ "" if row.sources | length == 1 else "s" }}</summary>
+                  <div class="src-pop">
+                    {% for s in row.sources %}
+                    <a href="{{ s.source_url }}" target="_blank" rel="noopener noreferrer" title="{{ s.source_url }}"><span class="src-type">{{ s.source_type }}</span>{{ s.source_url | shorturl(52) }}</a>
+                    {% endfor %}
+                  </div>
+                </details>
+              </td>
+              <td class="center">{{ m.ring(score, "sm", "Seen in a public source" if e.full_name else "Seen, but no name next to it") }}</td>
+              <td class="small nowrap">
+                {% if row.stale %}<span class="fresh-dot old"></span><span class="muted" title="Not found in the latest search; the person may have left">{{ row.last_seen | ago }}</span>
+                {% else %}<span class="fresh-dot"></span>{{ row.last_seen | ago if row.last_seen else "" }}{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        <div class="empty-list" data-no-match hidden>Nobody matches these filters. <button type="button" class="link-btn" data-filter-reset>Reset filters</button></div>
+        {% if not rows %}<div class="empty-list">No addresses at {{ report.domain }} were found in public sources.</div>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>

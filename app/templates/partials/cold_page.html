@@ -1,0 +1,42 @@
+{% set f = filters %}
+<div class="cold-layout">
+  <form class="card form-card cold-filters" hx-post="/outreach/companies/list" hx-target="#cold-list" hx-swap="innerHTML"
+        hx-trigger="submit, change delay:300ms, coldChanged from:body">
+    <h2 class="form-sub">Filters</h2>
+    <div class="form-field"><span class="field-label">Company size (people)</span>
+      <div class="size-range">
+        <input name="min_employees" inputmode="numeric" value="{{ f.min_employees }}" aria-label="Minimum company size">
+        <span class="muted">to</span>
+        <input name="max_employees" inputmode="numeric" value="{{ f.max_employees }}" aria-label="Maximum company size">
+      </div></div>
+    <label class="form-field"><span class="field-label">What they do (any of)</span>
+      <input name="keywords" value="{{ f.keywords }}" placeholder="ai, edtech, games, robotics">
+      <span class="hint">Comma-separated. Matches the name, one-liner, industry and description.</span></label>
+    <label class="form-field"><span class="field-label">Location contains</span>
+      <input name="location" value="{{ f.location }}" placeholder="Remote, San Francisco, TX"></label>
+    <label class="form-field"><span class="field-label">Found through</span>
+      <select name="source"><option value="">Any source</option>
+        {% for k, label in SOURCE_LABELS.items() %}<option value="{{ k }}" {% if f.source == k %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select></label>
+    <div class="check-stack">
+      <label class="check-label"><input type="checkbox" name="local_only" {% if f.local_only %}checked{% endif %}{% if not (student().home_state or student().home_cities) %} disabled{% endif %}> {{ student().area_label or "Home area" }} only{% if not (student().home_state or student().home_cities) %} <a class="xsmall" href="/settings">set it in Profile</a>{% endif %}</label>
+      <label class="check-label"><input type="checkbox" name="preferred_only" {% if f.preferred_only %}checked{% endif %}> Your fields only (software, AI, data, games, edtech…)</label>
+      <label class="check-label"><input type="checkbox" name="include_unknown_size" {% if f.include_unknown_size %}checked{% endif %}> Include companies of unknown size</label>
+      <label class="check-label"><input type="checkbox" name="hide_contacted" {% if f.hide_contacted %}checked{% endif %}> Hide companies you've already contacted</label>
+      <label class="check-label"><input type="checkbox" name="show_hidden" {% if f.show_hidden %}checked{% endif %}> Show hidden (Not interested)</label>
+    </div>
+    <p class="hint">Your filters are remembered.{% if cold_per_day %} The autopilot starts {{ cold_per_day }} cold pitch{{ "es" if cold_per_day != 1 }} a day from this list.{% else %}
+      Autopilot cold pitches are off (Settings → Autopilot).{% endif %}</p>
+  </form>
+
+  <div class="stack">
+    <div id="cold-list">{% include "partials/cold_list.html" %}</div>
+    <details class="card add-company">
+      <summary><strong>Add a company</strong> <span class="muted small">one you or a friend found yourselves</span></summary>
+      <form class="add-row" hx-post="/outreach/companies/add" hx-target="#out-detail" hx-swap="innerHTML">
+        <input name="name" placeholder="Company name" required><input name="website" placeholder="acme.com">
+        <button class="btn btn-sm">Add</button>
+      </form>
+    </details>
+  </div>
+</div>

@@ -1,0 +1,101 @@
+{% import "partials/macros.html" as m %}
+{% set SOURCE_NAMES = {"greenhouse": "Greenhouse", "lever": "Lever", "ashby": "Ashby", "apify": "LinkedIn"} %}
+{% if not selected.last_run_id %}
+<div class="card empty-list">
+  This search hasn't run yet. Press <strong>Run now</strong>: it reads each company's public job board
+  {%- if "apify" in spec.sources %} and LinkedIn{% endif %}, which takes about a minute.
+</div>
+{% else %}
+{% set li = (last_run.sources_json | fromjson).get("apify") if last_run else None %}
+{% if li and li.status in ["skipped", "refused", "error", "not_configured"] %}
+<div class="notice {% if li.status != 'skipped' %}warn{% endif %}"><strong>LinkedIn {{ "was skipped" if li.status == "skipped" else "didn't run" }} in the last run:</strong> {{ li.message }}</div>
+{% endif %}
+<div class="job-results">
+  <div class="table-card">
+    <div class="job-toolbar" aria-label="Narrow results">
+      <div class="tb-row">
+        <div class="tb-count">
+          <span class="tb-num" data-shown>{{ rows | length }}</span>
+          <span class="muted small">of {{ rows | length }} jobs</span>
+          {% if counts.new %}<span class="pop-pill" title="Found for the first time by the latest run">{{ counts.new }} new</span>{% endif %}
+        </div>
+        <span class="grow"></span>
+        <input class="table-search" type="search" data-text-filter placeholder="Search title, company, location" aria-label="Filter jobs">
+        <select data-company-filter class="compact-select" aria-label="Company">
+          <option value="">All companies</option>
+          {% for c in companies %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="tb-row toggles" role="group" aria-label="Show only">
+        <span class="tb-label">Show only</span>
+        {% set hs_toggle = [("hs", "High school OK", counts.hs_ok, "toggle-good")] if student().high_school else [] %}
+        {% for key, label, n, extra in [("new", "New", counts.new, "toggle-pop")] + hs_toggle + [
+                                        ("small", "Small (≤100)", counts.small, ""), ("local", "Local", counts.local, ""),
+                                        ("eligible", "Eligible for me", counts.eligible, ""),
+                                        ("saved", "Saved", counts.saved, ""),
+                                        ("pay", "Pay listed", counts.pay, ""), ("remote", "Remote", counts.remote, ""),
+                                        ("noflags", "No flags", counts.no_flags, "")] %}
+        <label class="toggle {{ extra }}"><input type="checkbox" data-quick="{{ key }}">
+          <span><i class="tg-check">{% include "partials/icon_check.svg" %}</i>{{ label }}<b>{{ n }}</b></span></label>
+        {% endfor %}
+        <span class="tb-sep"></span>
+        <label class="toggle quiet"><input type="checkbox" data-quick="dismissed">
+          <span><i class="tg-check">{% include "partials/icon_check.svg" %}</i>Include dismissed<b>{{ counts.dismissed }}</b></span></label>
+        <span class="grow"></span>
+        <span class="filter-count" data-filter-count></span>
+        <button type="button" class="link-btn" data-filter-reset hidden>Clear filters</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="table jobs-table">
+        <thead><tr>
+          <th data-sort="title">Job</th>
+          <th data-sort="score" class="center sorted" data-dir="desc">Match</th>
+          <th data-sort="location">Location</th>
+          <th data-sort="mode">Mode</th>
+          <th data-sort="paymax">Pay</th>
+          <th data-sort="posted">Posted</th>
+          <th data-sort="flags">Flags</th>
+        </tr></thead>
+        <tbody>
+        {% for r in rows %}
+          {% set j = r.job %}
+          {% set locs = (j.location or "").split(";") | map("trim") | select | list %}
+          <tr data-job="{{ j.id }}" data-new="{{ 1 if r.new else 0 }}" data-state="{{ j.state }}" data-pay="{{ 1 if r.pay else 0 }}"
+              data-mode="{{ j.work_mode or '' }}" data-flags="{{ r.warn_flags | length }}" data-score="{{ r.link.match_score }}"
+              data-eligible="{{ 1 if r.eligible else 0 }}" data-hs="{{ 1 if r.hs_ok else 0 }}"
+              data-small="{{ 1 if r.size and r.size <= 100 else 0 }}" data-local="{{ 1 if r.local else 0 }}"
+              data-posted="{{ j.posted_at or '' }}" data-company="{{ j.company }}" data-title="{{ j.title | lower }}"
+              data-location="{{ j.location | lower }}" data-paymax="{{ j.pay_year_max or 0 }}" data-source="{{ r.source_names | join(',') }}"
+              data-text="{{ (j.title ~ ' ' ~ j.company ~ ' ' ~ j.location) | lower }}"
+              class="clickable{% if r.new %} is-new{% endif %}{% if j.state == 'saved' %} is-saved{% endif %}{% if j.state == 'dismissed' %} is-dismissed{% endif %}"
+              hx-get="/jobs/job/{{ j.id }}?search={{ selected.id }}" hx-target="#job-detail" hx-swap="innerHTML">
+            <td class="job-td"><div class="job-cell">
+              <span class="co-mark {{ j.company | avatar_class }}" aria-hidden="true">{{ (j.company or "?")[:1] | upper }}</span>
+              <div class="min0">
+                <div class="job-title">{% if r.new %}<span class="new-dot" title="New since the previous run"></span>{% endif %}{{ j.title }}</div>
+                <div class="job-sub">{{ j.company }}{% if r.size %} <span class="size-tag">~{{ r.size }} people</span>{% endif %}{% if r.local %} <span class="local-tag">Local</span>{% endif %}{% if j.job_type %} · {{ JOB_TYPE_LABELS[j.job_type] }}{% endif %}
+                  {% for s in r.source_names %}<span class="src-tag{% if s == 'apify' %} src-tag-li{% endif %}">{{ SOURCE_NAMES[s] }}</span>{% endfor %}{% if r.app_status %}<span class="status-pill st-{{ r.app_status }}">{{ STATUS_LABELS[r.app_status] }}</span>{% else %}<span class="saved-mark">Saved</span>{% endif %}</div>
+              </div>
+            </div></td>
+            <td class="center">{{ m.ring(r.link.match_score, "sm", "Keyword match + search fit") }}</td>
+            <td class="loc-cell small" title="{{ locs | join('; ') }}">
+              {% if locs %}{{ locs[0] }}{% if locs | length > 1 %} <span class="more-chip">+{{ locs | length - 1 }}</span>{% endif %}
+              {% else %}<span class="muted">Not stated</span>{% endif %}
+            </td>
+            <td>{% if j.work_mode %}<span class="pill mode-{{ j.work_mode }}"><span class="pill-dot"></span>{{ WORK_MODE_LABELS[j.work_mode] }}</span>{% else %}<span class="muted small">Not stated</span>{% endif %}</td>
+            <td class="small nowrap">{% if r.pay %}<span class="pay">{{ r.pay }}</span>{% else %}<span class="muted">Not listed</span>{% endif %}</td>
+            <td class="small nowrap muted" title="{{ j.posted_at[:10] if j.posted_at else '' }}">{{ j.posted_at | since }}</td>
+            <td class="flags-cell">{% for f in r.flags[:2] %}<span class="flag {% if f.key == 'hs_ok' %}flag-good{% elif f.key == 'pitch' %}flag-pitch{% endif %}" title="{{ f.snippet }}">{{ f.label }}</span>{% endfor %}{% if r.flags | length > 2 %}<span class="flag more" title="{{ r.flags[2:] | map(attribute='label') | join(', ') }}">+{{ r.flags | length - 2 }}</span>{% endif %}
+              {% if not r.flags %}<span class="muted small">None</span>{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <div class="empty-list" data-no-match hidden>No jobs match these filters. <button type="button" class="link-btn" data-filter-reset>Clear filters</button></div>
+      {% if not rows %}<div class="empty-list">Nothing matched in the last run. Try fewer keywords or a wider date range.</div>{% endif %}
+    </div>
+  </div>
+  {% if last_run %}<p class="muted xsmall run-note">Last run {{ last_run.started_at | ago }}: {{ last_run.message }}</p>{% endif %}
+</div>
+{% endif %}

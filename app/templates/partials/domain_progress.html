@@ -1,0 +1,30 @@
+{% set sources = run.sources_json | fromjson %}
+{% set labels = {"website": "Company website", "github": "GitHub commits", "websearch": "Web search"} %}
+<div class="box progress-card" hx-get="/finder/runs/{{ run.id }}" hx-trigger="every 1s" hx-swap="outerHTML">
+  <div class="dr-head">
+    <div class="dr-title">
+      <span class="dr-count"><span class="spinner"></span> Searching <strong>{{ run.domain }}</strong></span>
+      <span class="muted small">{{ "Queued" if run.status == "queued" else "Started" }} {{ run.started_at | ago }}</span>
+    </div>
+    <button class="btn" hx-post="/finder/runs/{{ run.id }}/cancel" hx-target="closest .progress-card" hx-swap="outerHTML">Cancel</button>
+  </div>
+  <div class="progress-body">
+    <div class="stats">
+      <div class="stat"><span class="stat-num">{{ run.pages_crawled }}<span class="stat-of">/{{ max_pages }}</span></span><span class="muted small">pages crawled</span></div>
+      <div class="stat"><span class="stat-num accent">{{ run.emails_found }}</span><span class="muted small">addresses found</span></div>
+      <div class="stat"><span class="stat-num">{{ run.pages_queued }}</span><span class="muted small">pages queued</span></div>
+    </div>
+    <div class="bar"><div class="bar-fill fill-accent" style="width: {{ [100, (run.pages_crawled * 100 // max_pages)] | min }}%"></div></div>
+    <ul class="source-list">
+      {% for key in ["website", "github", "websearch"] %}
+      {% set st = sources.get(key) %}
+      <li class="source-item">
+        <span class="source-dot {% if not st %}pending{% elif st.status == 'running' %}running{% elif st.status == 'ok' %}ok{% else %}warn{% endif %}"></span>
+        <span class="source-name">{{ labels[key] }}</span>
+        <span class="muted small">{% if st %}{{ st.message }}{% else %}waiting{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="muted small current-msg">{{ run.message }}</p>
+  </div>
+</div>

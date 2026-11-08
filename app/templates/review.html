@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Review · Job Hunt{% endblock %}
+{% block content %}
+<div class="page review-page">
+  <div class="page-head">
+    <div>
+      <h1>Review</h1>
+      <p class="muted">What the autopilot prepared. Read, tweak, click <strong>Looks good</strong>, copy into the application,
+        submit it yourself, then <strong>Mark as applied</strong>. Nothing sends or submits without you.</p>
+    </div>
+    <div class="dash-actions"><a class="btn" href="/dashboard">Overview</a><a class="btn" href="/settings?tab=autopilot">Autopilot settings</a></div>
+  </div>
+
+  {% set s = strip %}
+  <div class="review-strip">
+    <div class="rs {% if s.ready %}rs-pop{% endif %}"><span class="rs-num">{{ s.ready }}</span><span class="rs-label">ready to review</span></div>
+    <div class="rs"><span class="rs-num">{{ s.pitches_sent }}</span><span class="rs-label">pitches sent</span></div>
+    <div class="rs"><span class="rs-num">{{ s.applied_week }}</span><span class="rs-label">applied this week</span></div>
+    <div class="rs"><span class="rs-num">{{ s.sent_today }}<small>/{{ s.cap }}</small></span><span class="rs-label">emails sent today</span></div>
+    <div class="rs {% if s.replies %}rs-pop{% endif %}"><a href="/outreach"><span class="rs-num">{{ s.replies }}</span><span class="rs-label">replies need you</span></a></div>
+    <div class="rs"><span class="rs-num">{{ s.follow_ups }}</span><span class="rs-label">follow-ups due</span></div>
+    <div class="rs rs-wide">
+      <span class="rs-label">Claude (last run{% if s.run_at %} {{ s.run_at | localtime }}{% endif %})</span>
+      <span class="rs-status {{ s.claude }}">{% if s.claude == "ok" %}OK{% elif s.claude == "limit" %}Usage limit hit{% if s.claude_reset %} · resets {{ s.claude_reset }}{% endif %} · catch-up will finish{% elif s.claude == "refused" %}Refused: API key found{% elif not s.run_status %}No run yet{% else %}{{ s.claude or "not needed" }}{% endif %}</span>
+      <span class="xsmall muted">today: {{ s.counts.get("scores", 0) }}/{{ settings.cap_scores }} scores · {{ s.counts.get("app_drafts", 0) }}/{{ settings.cap_app_drafts }} letters · {{ s.counts.get("outreach_drafts", 0) }}/{{ settings.cap_outreach_drafts }} emails{% if s.redrafts_queued %} · {{ s.redrafts_queued }} redrafts queued{% endif %}</span>
+    </div>
+    <div class="rs rs-wide" hx-get="/settings/usage/apify-mini" hx-trigger="load" hx-swap="innerHTML"><span class="rs-label">LinkedIn budget</span><span class="xsmall muted">checking…</span></div>
+  </div>
+
+  <div id="review-list">
+    {% for x in cold %}{% set ct, co, queue_ok = x.ct, x.co, x.queue_ok %}
+      {% include "partials/review_cold.html" %}
+    {% endfor %}
+    {% for c in cards %}
+      {% include "partials/review_card.html" %}
+    {% else %}{% if not cold %}
+      <div class="card empty-list">Nothing to review. The autopilot runs every morning; or save jobs on <a href="/jobs">Jobs</a>.</div>
+    {% endif %}{% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+  document.addEventListener("click", async (ev) => {
+    const tab = ev.target.closest("[data-cover-tab]");
+    if (tab && !tab.disabled) {
+      const sec = tab.closest(".cover-section");
+      sec.dataset.coverView = tab.dataset.coverTab;
+      sec.querySelectorAll("[data-cover-tab]").forEach(b => b.classList.toggle("active", b === tab));
+    }
+    const btn = ev.target.closest("[data-copy-from]");
+    if (btn) {
+      const el = document.getElementById(btn.dataset.copyFrom);
+      const text = el ? (el.value !== undefined ? el.value : el.innerText) : "";
+      const label = btn.textContent;
+      try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; } catch { btn.textContent = "Copy failed"; }
+      setTimeout(() => { btn.textContent = label; }, 1400);
+    }
+  });
+})();
+</script>
+{% endblock %}

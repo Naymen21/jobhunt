@@ -1,0 +1,6 @@
+[
+ {"html_url":"https://github.com/acme/widget/commit/1","commit":{"message":"Fix bug\n\nlong","author":{"name":"Linus Pauling","email":"linus.pauling@acme.test"},"committer":{"name":"GitHub","email":"noreply@github.com"}}},
+ {"html_url":"https://github.com/acme/widget/commit/2","commit":{"message":"Add feature","author":{"name":"mhamilton","email":"margaret.hamilton@acme.test"},"committer":{"name":"Margaret Hamilton","email":"margaret.hamilton@acme.test"}}},
+ {"html_url":"https://github.com/acme/widget/commit/3","commit":{"message":"Bump deps","author":{"name":"dependabot[bot]","email":"49699333+dependabot[bot]@users.noreply.github.com"},"committer":{"name":"Release Bot","email":"releases@acme.test"}}},
+ {"html_url":"https://github.com/acme/widget/commit/4","commit":{"message":"Docs","author":{"name":"Kim Lee","email":"kim@gmail.com"},"committer":{"name":"Kim Lee","email":"kim@gmail.com"}}}
+]

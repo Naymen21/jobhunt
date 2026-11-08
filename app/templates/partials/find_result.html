@@ -1,0 +1,83 @@
+{% import "partials/macros.html" as m %}
+{% set ev_labels = {"seen": "Seen in the wild", "seen-no-name": "Seen (no name)", "pattern": "Pattern match",
+                    "other-template": "Other format", "base-rate": "Common format", "taken": "Belongs to someone else"} %}
+<div class="find-result">
+  {% if r.best %}
+  {% set b = r.best %}
+  {% set seen = b.evidence in ["seen", "seen-no-name"] %}
+  <article class="card person-card">
+    <div class="pc-main">
+      {{ m.avatar(r.name, "lg") }}
+      <div class="pc-text">
+        <div class="pc-name">{{ r.name }} <span class="muted pc-at">at {{ r.domain }}</span></div>
+        <div class="pc-email">{{ b.email }}</div>
+        <div class="pc-tags">
+          {% if seen %}<span class="tag tag-found">Found in a public source</span>{% else %}<span class="tag">Inferred from the pattern</span>{% endif %}
+          <span class="tag">{{ ev_labels[b.evidence] }}</span>
+        </div>
+      </div>
+      <div class="pc-score">{{ m.ring(b.score, "lg") }}<span class="muted xsmall">confidence</span></div>
+    </div>
+    <div class="pc-why">
+      <span class="why-label">Why</span>
+      <span>{% if b.source_url %}This address appears next to this name at <a href="{{ b.source_url }}" target="_blank" rel="noopener noreferrer">{{ b.source_url | shorturl }}</a>.
+      {% else %}{{ b.why }}.{% endif %}
+      {% if b.verification %}<span class="muted">Verifier: {{ b.verification.status | replace("_", "-") }}{% if b.verify_note %}, {{ b.verify_note }}{% endif %}.</span>{% endif %}</span>
+    </div>
+    <div class="pc-actions">
+      <button type="button" class="btn primary" data-copy="{{ b.email }}">Copy email</button>
+      <button type="button" class="btn" hx-post="/finder/verify" hx-vals='{{ {"email": b.email} | tojson }}' hx-target="#result" hx-swap="innerHTML">Verify</button>
+      {% if r.searched %}<button type="button" class="btn" hx-get="/finder/domains/{{ r.domain }}" hx-target="#domain-search-slot" hx-swap="innerHTML">See everyone at {{ r.domain }}</button>{% endif %}
+    </div>
+  </article>
+  {% endif %}
+
+  <div class="info-grid">
+    <div class="card info-card">
+      <span class="info-icon tint-brand">{% include "partials/icon_target.svg" %}</span>
+      <div>
+        {% if r.pattern and r.pattern.template %}
+        <div class="info-title">{{ r.domain }} uses <span class="mono">{{ display_template(r.pattern.template, r.domain) }}</span></div>
+        <p class="muted small">{{ r.pattern.support }} of {{ r.pattern.total }} named examples follow it{% if r.pattern.variant_support %}; {{ r.pattern.variant_support }} more use {{ display_template(r.pattern.variants[0]) }} when it's taken{% endif %}. {{ r.pattern.confidence }}% sure.</p>
+        {% elif r.searched %}
+        <div class="info-title">No pattern for {{ r.domain }} yet</div>
+        <p class="muted small">The search found no names next to addresses, so these are general guesses.</p>
+        {% else %}
+        <div class="info-title">{{ r.domain }} hasn't been searched</div>
+        <p class="muted small">These are general guesses. Searching the company finds real examples and its pattern.</p>
+        <button class="btn" hx-post="/finder/domain-search" hx-vals='{{ {"domain": r.domain} | tojson }}' hx-target="#domain-search-slot" hx-swap="innerHTML">Search {{ r.domain }}</button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card info-card">
+      <span class="info-icon tint-slate">{% include "partials/icon_people.svg" %}</span>
+      <div>
+        {% if r.searched %}
+        <div class="info-title">{{ r.found_count }} address{{ "" if r.found_count == 1 else "es" }} found at {{ r.domain }}</div>
+        <p class="muted small">From the company's website and public GitHub commits.</p>
+        {% else %}
+        <div class="info-title">No addresses collected yet</div>
+        <p class="muted small">Run a company search to collect them.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if r.alternatives %}
+  <div class="table-card">
+    <div class="table-meta"><span>Other possibilities</span></div>
+    <table class="table alt-table">
+      <tbody>
+      {% for c in r.alternatives %}
+        <tr class="{% if c.evidence == 'taken' %}taken{% endif %}">
+          <td class="email-cell">{{ c.email }}</td>
+          <td class="center">{{ m.ring(c.score, "sm") }}</td>
+          <td class="muted small">{{ c.why }}{% if c.verify_note %} &middot; {{ c.verify_note }}{% endif %}</td>
+          <td class="right"><span class="tag">{{ ev_labels[c.evidence] }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>

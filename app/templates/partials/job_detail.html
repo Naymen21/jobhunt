@@ -1,0 +1,81 @@
+{% import "partials/macros.html" as m %}
+{% set j = v.job %}
+{% set mt = v.match %}
+<div class="drawer-head">
+  <div class="min0">
+    <div class="muted small">{{ j.company }}{% if j.department %} · {{ j.department }}{% endif %}</div>
+    <h2 class="drawer-title">{{ j.title }}</h2>
+    <div class="chip-row">
+      {% if v.new %}<span class="new-badge">New</span>{% endif %}
+      {% if v.app_status %}<a class="status-pill st-{{ v.app_status }}" href="/applications">{{ STATUS_LABELS[v.app_status] }} in Applications</a>
+      {% elif j.state == "saved" %}<span class="pill dept-executive"><span class="pill-dot"></span>Saved</span>{% endif %}
+      {% if j.state == "dismissed" %}<span class="pill"><span class="pill-dot"></span>Dismissed</span>{% endif %}
+      {% if j.work_mode %}<span class="pill mode-{{ j.work_mode }}"><span class="pill-dot"></span>{{ WORK_MODE_LABELS[j.work_mode] }}</span>{% endif %}
+      {% if j.job_type %}<span class="tag">{{ JOB_TYPE_LABELS[j.job_type] }}</span>{% endif %}
+      {% if v.pay %}<span class="tag">{{ v.pay }}</span>{% endif %}
+    </div>
+  </div>
+  <button class="btn btn-quiet drawer-close" type="button" data-close-drawer aria-label="Close">Close</button>
+</div>
+
+{% if error %}<div class="inline-error">{{ error }}</div>{% endif %}
+<div class="drawer-actions">
+  <a class="btn primary" href="{{ j.url }}" target="_blank" rel="noopener noreferrer">Open original</a>
+  {% set state_url = "/jobs/job/" ~ j.id ~ "/state" ~ ("?search=" ~ search_id if search_id else "") %}
+  {% if j.state == "saved" %}
+  <button class="btn" hx-post="{{ state_url }}" hx-vals='{"state": ""}' hx-target="#job-detail">Unsave</button>
+  {% else %}
+  <button class="btn" hx-post="{{ state_url }}" hx-vals='{"state": "saved"}' hx-target="#job-detail" title="Adds it to Applications as Saved">Save</button>
+  {% endif %}
+  {% if j.state == "dismissed" %}
+  <button class="btn" hx-post="{{ state_url }}" hx-vals='{"state": ""}' hx-target="#job-detail">Undo dismiss</button>
+  {% else %}
+  <button class="btn" hx-post="{{ state_url }}" hx-vals='{"state": "dismissed"}' hx-target="#job-detail">Dismiss</button>
+  {% endif %}
+  <a class="btn" href="{{ finder_url }}">{% include "partials/icon_people.svg" %}Find people here</a>
+</div>
+
+<dl class="facts small">
+  <div><dt>Location</dt><dd>{{ j.location or "Not stated" }}</dd></div>
+  <div><dt>Posted</dt><dd>{% if j.posted_at %}{{ j.posted_at[:10] }} ({{ j.posted_at | ago }}){% else %}Not stated{% endif %}</dd></div>
+  <div><dt>Found on</dt><dd>{% for s in v.sources %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ {"greenhouse": "Greenhouse", "lever": "Lever", "ashby": "Ashby", "apify": "LinkedIn"}.get(s.source, s.source) }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</dd></div>
+  {% if j.apply_url and j.apply_url != j.url %}<div><dt>Apply page</dt><dd><a href="{{ j.apply_url }}" target="_blank" rel="noopener noreferrer">{{ j.apply_url | shorturl(46) }}</a></dd></div>{% endif %}
+</dl>
+
+{% if v.flags %}
+<section class="drawer-section">
+  <h3>Eligibility flags</h3>
+  <p class="muted xsmall">Requirements in the posting you may want to check. The job isn't hidden for these
+    unless you turn on "Eligible for me"{% if student().high_school %} or "High school OK"{% endif %}. "Eligible" is judged for: {{ student().label | lower }}.</p>
+  <ul class="flag-list">
+    {% for f in v.flags %}
+    <li><span class="flag {% if f.key == 'hs_ok' %}flag-good{% elif f.key == 'pitch' %}flag-pitch{% endif %}">{{ f.label }}</span><span class="flag-quote">“{{ f.snippet }}”</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if mt %}
+<section class="drawer-section match-box">
+  <div class="match-top">
+    {{ m.ring(v.link.match_score, "md") }}
+    <div>
+      <div class="info-title">Basic match {{ v.link.match_score }}</div>
+      <div class="muted xsmall">{% if mt.keyword_share is not none %}{{ (mt.keyword_share * 100) | round | int }}% of the posting's skills are on your resume · {% endif %}search fit {{ (mt.fit * 100) | round | int }}%</div>
+    </div>
+    <div class="ai-score" title="Filled in later by a Claude Code command; the website never calls an AI">
+      <span class="why-label">AI score</span>
+      {% if j.ai_score is not none %}<strong>{{ j.ai_score }}</strong>{% else %}<span class="muted small">not scored: run /score-jobs</span>{% endif %}
+    </div>
+  </div>
+  {% if j.ai_notes %}<p class="ai-reason small"><span class="why-label">AI</span> {{ j.ai_notes }}</p>{% endif %}
+  {% if mt.matched %}<div class="skills-line"><span class="why-label">On your resume</span><div class="chip-row">{% for s in mt.matched %}<span class="tag tag-found">{{ s }}</span>{% endfor %}</div></div>{% endif %}
+  {% if mt.missing %}<div class="skills-line"><span class="why-label">Not on it</span><div class="chip-row">{% for s in mt.missing %}<span class="tag">{{ s }}</span>{% endfor %}</div></div>{% endif %}
+  {% if mt.notes %}<ul class="notes small muted">{% for n in mt.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+</section>
+{% endif %}
+
+<section class="drawer-section">
+  <h3>Description</h3>
+  <div class="job-description">{{ (j.description | tidy_description) or "No description in the feed. Open the original posting." }}</div>
+</section>

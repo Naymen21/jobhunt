@@ -1,0 +1,43 @@
+{% import "partials/macros.html" as m %}
+{% set running = run.status in ["queued", "running"] %}
+{% set found = rows | selectattr("status", "equalto", "done") | list | length %}
+{% set needs = rows | selectattr("status", "equalto", "needs_domain") | list | length %}
+{% set errors = rows | selectattr("status", "equalto", "error") | list | length %}
+<div class="bulk-run" {% if running %}hx-get="/finder/bulk-find/{{ run.id }}" hx-trigger="every 1500ms" hx-swap="outerHTML"{% endif %}>
+  <div class="card result-head">
+    <div class="rh-left">
+      <div>
+        <div class="rh-title">{% if running %}<span class="spinner"></span> Finding {{ run.done }} of {{ run.total }}{% elif run.status == "done" %}Finished {{ run.total }} people{% elif run.status == "cancelled" %}Stopped after {{ run.done }} of {{ run.total }}{% else %}Stopped: {{ run.error }}{% endif %}</div>
+        <div class="muted small">{{ run.message if running else "Started " ~ (run.started_at | ago) }}</div>
+      </div>
+    </div>
+    <div class="rh-right">
+      {% if running %}<button class="btn" hx-post="/finder/bulk-find/{{ run.id }}/cancel" hx-target="closest .bulk-run" hx-swap="outerHTML">Stop</button>{% endif %}
+      <a class="btn" href="/finder/bulk-find/{{ run.id }}/results.csv" download>{% include "partials/icon_download.svg" %}Export CSV</a>
+    </div>
+  </div>
+  <div class="progress-line"><div style="width: {{ (run.done * 100 // run.total) if run.total else 0 }}%"></div></div>
+  <div class="stat-tiles">
+    <div class="stat-tile"><span class="info-icon tint-brand">{% include "partials/icon_target.svg" %}</span><div><div class="stat-num">{{ found }}</div><div class="muted small">emails found</div></div></div>
+    <div class="stat-tile"><span class="info-icon tint-clay">{% include "partials/icon_globe.svg" %}</span><div><div class="stat-num">{{ needs }}</div><div class="muted small">need a website</div></div></div>
+    <div class="stat-tile"><span class="info-icon tint-berry">{% include "partials/icon_info.svg" %}</span><div><div class="stat-num">{{ errors }}</div><div class="muted small">couldn't process</div></div></div>
+  </div>
+  <div class="table-card">
+    <div class="table-scroll">
+      <table class="table">
+        <thead><tr><th>Name</th><th>Company</th><th>Email</th><th class="center">Score</th><th>Notes</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr class="{% if r.status == 'pending' %}pending{% endif %}">
+            <td><div class="who">{{ m.avatar(r.input_name, "sm") }}<span class="who-name">{{ r.input_name }}</span></div></td>
+            <td class="small">{{ r.input_company }}{% if r.domain and r.domain != r.input_company %}<div class="muted xsmall">{{ r.domain }}</div>{% endif %}</td>
+            <td class="email-cell">{% if r.email %}{{ r.email }}{% elif r.status == "pending" %}<span class="muted small">waiting</span>{% else %}<span class="muted">-</span>{% endif %}</td>
+            <td class="center">{% if r.score is not none %}{{ m.ring(r.score, "sm") }}{% endif %}</td>
+            <td class="small {% if r.status != 'done' %}warn-text{% else %}muted{% endif %}">{{ r.why }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
