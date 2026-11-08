@@ -21,6 +21,12 @@ folder on your computer. The site only listens on `http://127.0.0.1:8000`.
 **Never use an Anthropic API key with this project.** The autopilot refuses to run if `ANTHROPIC_API_KEY` is set,
 so it can't run up an API bill. AI work only goes through Claude Code on your subscription.
 
+## Get it
+
+- **Download:** on [github.com/Naymen21/jobhunt](https://github.com/Naymen21/jobhunt) click **Code → Download ZIP**, then unzip it.
+- **Or with git:** `git clone https://github.com/Naymen21/jobhunt.git` (then `git pull` later to update; your `.env` and
+  `data/` folder are never touched by updates).
+
 ## Set up (about 10 minutes)
 
 **Windows**
